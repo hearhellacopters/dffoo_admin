@@ -1,0 +1,39 @@
+
+.logWraper {
+    width: 63rem;
+    color: #eee;
+    padding: 1rem;
+    font-family: monospace;
+    flex-direction: column;
+    margin: auto;
+    filter: drop-shadow(4px 5px 1px black);
+    text-shadow: -1px -1px #000, 1px -1px #000, -1px 1px #000, 1px 1px #000;
+}
+
+.logHeader {
+    border-top-right-radius: 4px;
+    border-top-left-radius: 4px;
+    background-color: rgb(21, 110, 138);
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 0rem;
+}
+
+.logContainer {
+    overflow-y: auto;
+    height: 30rem;
+    background-color: #101010;
+    padding: 1rem;
+    border-bottom-left-radius: 4px;
+    border-bottom-right-radius: 4px;
+}
+
+.logLine {
+    white-space: pre-wrap;
+    width: 60rem;
+    margin-bottom: 4px;
+}
+
+.iconHolder{
+    filter: drop-shadow(rgb(0, 0, 0) 1px 0px 0px) drop-shadow(rgb(0, 0, 0) 0px 1px 0px) drop-shadow(rgb(0, 0, 0) 0px -1px 0px) drop-shadow(rgb(0, 0, 0) -1px 0px 0px);
+}
