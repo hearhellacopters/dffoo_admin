@@ -1,0 +1,1 @@
+Boilerplate webpage for the admin page. 
