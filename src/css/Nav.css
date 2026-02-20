@@ -1,0 +1,19 @@
+.navigation {
+    background-color: #3f5b92;
+    width: auto;
+}
+
+.navigation a {
+    line-height: 1.5em;
+    color: #ebebeb;
+    margin: 0px 20px;
+    padding: 20px;
+    text-decoration: none;
+    display: inline-block;
+    text-align: center;
+}
+
+.navigation a:hover {
+    background-color: #ebebeb;
+    color: #3f5b92;
+}
