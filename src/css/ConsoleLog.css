@@ -1,6 +1,7 @@
 
 .logWraper {
-    width: 63rem;
+    max-width: 63rem;
+    min-width: 350px;
     color: #eee;
     padding: 1rem;
     font-family: monospace;
@@ -17,6 +18,7 @@
     display: flex;
     justify-content: space-between;
     margin-bottom: 0rem;
+    padding-bottom: .3rem;
 }
 
 .logContainer {
@@ -30,10 +32,10 @@
 
 .logLine {
     white-space: pre-wrap;
-    width: 60rem;
     margin-bottom: 4px;
 }
 
 .iconHolder{
+    padding-top: 3px;
     filter: drop-shadow(rgb(0, 0, 0) 1px 0px 0px) drop-shadow(rgb(0, 0, 0) 0px 1px 0px) drop-shadow(rgb(0, 0, 0) 0px -1px 0px) drop-shadow(rgb(0, 0, 0) -1px 0px 0px);
 }
