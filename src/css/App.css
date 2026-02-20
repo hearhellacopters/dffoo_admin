@@ -2,6 +2,10 @@
     text-align: center;
 }
 
+a{
+    color: #b7a500
+}
+
 .adminApp {
     margin: 0 auto;
     background: #393f47;
