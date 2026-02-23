@@ -14,3 +14,14 @@ form {
     text-align: center;
 
 }
+
+.btn-reset {
+    color: #ebebeb;
+    background-color: #FF0000;
+    margin: 10px;
+    padding: 10px 20px;
+}
+
+.ip-port {
+    margin: 10px 5px;
+}
