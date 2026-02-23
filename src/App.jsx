@@ -3,6 +3,9 @@ import { Navigate, BrowserRouter, Route, Routes } from 'react-router-dom';
 const Admin = React.lazy(() => import('./AdminPanel.jsx'));
 import Loading from './components/Loading.jsx';
 import NotFound from './404.jsx';
+import Assets from "./components/Assets.jsx";
+import Patches from "./components/Patches.jsx";
+import Settings from "./components/Settings.jsx";
 import './css/App.css';
 
 const getQuery = () => {
@@ -48,6 +51,9 @@ export default function App() {
                             <Route path="/" element={<Navigate replace to="/adminPanel" />} />
 
                             <Route path="/adminPanel" exact element={<Admin />} />
+                            <Route path="/assets" exact element={<Assets />} />
+                            <Route path="/patches" exact element={<Patches />} />
+                            <Route path="/settings" exact element={<Settings />} />
 
                             <Route path="/loading" exact element={<Loading />} />
 

@@ -1,0 +1,27 @@
+.btn {
+    background-color: #3f5b92;
+    color: #ebebeb;
+    padding: 5px;
+    margin: 15px auto;
+}
+
+input {
+    margin: 10px auto;
+}
+
+form {
+    margin: 20px auto 20px auto;
+    text-align: center;
+
+}
+
+.btn-reset {
+    color: #ebebeb;
+    background-color: #FF0000;
+    margin: 10px;
+    padding: 10px 20px;
+}
+
+.ip-port {
+    margin: 10px 5px;
+}
