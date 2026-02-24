@@ -98,7 +98,7 @@ export default function Settings() {
             <Nav/>
 
             <form onSubmit={handleSubmit}>
-                <div>
+                <div className="region">
                     <h3>Server Region</h3>
 
                     <label htmlFor="JP">
@@ -121,7 +121,34 @@ export default function Settings() {
                         GL (Global)
                     </label>
                 </div>
-                <div>
+
+                <div className="network">
+                    <h3>Network Configuration</h3>
+                    
+                    <div className="ip-port">
+                        <label>IP Address (v4/v6): </label>
+                        <input 
+                            type="text" 
+                            value={ip} 
+                            onChange={(e) => setIp(e.target.value)} 
+                            placeholder="192.168.1.1 or 2001:db8::1"
+                            required 
+                        />
+                    </div>
+
+                    <div className="ip-port">
+                        <label>Port (Optional): </label>
+                        <input 
+                            type="number" 
+                            value={port} 
+                            onChange={(e) => setPort(e.target.value)} 
+                            placeholder="8080"
+                        />
+                    </div>
+                    <button className="btn" type="submit">Update IP</button>
+                </div>
+
+                <div className="reset">
                     <label htmlFor="reset">
                         <button className="btn-reset"
                             type="button"
@@ -134,29 +161,6 @@ export default function Settings() {
                     </label>
                 </div>
 
-                <h3>Network Configuration</h3>
-                
-                <div className="ip-port">
-                    <label>IP Address (v4/v6): </label>
-                    <input 
-                        type="text" 
-                        value={ip} 
-                        onChange={(e) => setIp(e.target.value)} 
-                        placeholder="192.168.1.1 or 2001:db8::1"
-                        required 
-                    />
-                </div>
-
-                <div className="ip-port">
-                    <label>Port (Optional): </label>
-                    <input 
-                        type="number" 
-                        value={port} 
-                        onChange={(e) => setPort(e.target.value)} 
-                        placeholder="8080"
-                    />
-                </div>
-                <button type="submit">Update IP</button>
             </form>
         </div>
     );

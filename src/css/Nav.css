@@ -1,19 +1,87 @@
 .navigation {
     background-color: #3f5b92;
-    width: auto;
+    width: 100%;
+    display: flex;
+    justify-content: space-between;
 }
 
-.navigation a {
+.navigation ul {
+    list-style-type: none;
+    display: flex;
+    margin: 0;
+    padding: 0;
+}
+
+.navigation ul li {
+        display: inline-flex;
+        margin: 0 0.3em;
+}
+
+.navigation ul li a {
     line-height: 1.5em;
     color: #ebebeb;
-    margin: 0px 20px;
-    padding: 15px 20px;
+    padding: 10px 15px;
     text-decoration: none;
-    display: inline-block;
     text-align: center;
+    font-weight: bold;
 }
 
-.navigation a:hover {
+.navigation ul li a:hover {
     background-color: #ebebeb;
     color: #3f5b92;
+}
+
+.logo {
+
+}
+
+.logo li img {
+    max-height: 44px;
+}
+
+.menu {
+    
+}
+
+.navigation input[type="checkbox"], .navigation label {
+    display: none;
+}
+
+@media (max-width: 650px) {
+    .navigation {
+        flex-direction: row;
+        flex-wrap: wrap;
+        margin-left: 0;
+        margin-right: 0;
+    }
+
+    .navigation ul {
+        display: block;
+    }
+
+    .navigation ul:last-child {
+        width: 100%;
+        flex-basis: 100%;
+    }
+
+    .navigation ul li {
+        margin-bottom: 0;
+        width: 100%;
+        text-align: right;
+        padding: 0.5em;
+    }
+
+    input[type='checkbox']:not(:checked)+ul {
+        display: none;
+    }
+
+    .navigation label {
+        text-align: right;
+        display: block;
+        padding: 0.5em;
+        line-height: 1.6em;
+        align-self: center;
+        font-size: x-large;
+    }
+
 }
