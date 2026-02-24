@@ -61,6 +61,8 @@ interface RequestMap {
      */
     log: {
         request: {
+            type: "log",
+            id: id,
             payload: any
         },
         response: {
@@ -104,6 +106,8 @@ interface RequestMap {
      */
     error: {
         request: {
+            type: "error",
+            id: id,
             payload: any
         },
         response: {
@@ -225,6 +229,8 @@ interface RequestMap {
      */
     jobProgress: {
         request: {
+            type: "jobProgress",
+            id: id,
             payload: any
         },
         response: {
@@ -251,6 +257,8 @@ interface RequestMap {
      */
     jobComplete: {
         request: {
+            type: "jobComplete",
+            id: id,
             payload: any
         },
         response: {

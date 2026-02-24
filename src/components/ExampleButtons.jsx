@@ -1,7 +1,12 @@
 import { useEffect, useRef, useState } from "react";
 import { startSocket, subscribe, request } from "../services/socket.js";
 
-export default function ExampleButtons() {
+/**
+ * Button Examples
+ * 
+ * @param {{setNeedsRestart: (value: SetStateAction<boolean>) => void}} param0 
+ */
+export default function ExampleButtons({setNeedsRestart}) {
     const [progress, setProgress] = useState("");
 
     const [status, setStatus] = useState("");
@@ -54,6 +59,8 @@ export default function ExampleButtons() {
 
             setStatus(res.payload.status);
 
+            setNeedsRestart(true);
+
             jobs.current.set(jobId, {
                 // processing happens here
                 onProgress: (data) => {
@@ -83,15 +90,13 @@ export default function ExampleButtons() {
             console.error(res.payload.message);
         }
     };
-
     // single reponse test
     async function getTest() {
         return await request("test");
     };
 
     return (
-        <div style={{ margin: "auto", textAlign: "center" }}>
-            <br />
+        <div>
             <button type="button" onClick={getTest}>Test Log</button>
             <br />
             <button type="button" onClick={getTime}>Get Time</button>

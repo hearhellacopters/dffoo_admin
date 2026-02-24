@@ -1,17 +1,17 @@
 
-.logWraper {
-    max-width: 63rem;
+.log-wraper {
+    margin-bottom: 1rem;
+    margin-right: .5rem;
+    margin-left: .5rem;
     min-width: 350px;
     color: #eee;
-    padding: 1rem;
     font-family: monospace;
-    flex-direction: column;
-    margin: auto;
+    position: relative;
     filter: drop-shadow(4px 5px 1px black);
     text-shadow: -1px -1px #000, 1px -1px #000, -1px 1px #000, 1px 1px #000;
 }
 
-.logHeader {
+.log-header {
     border-top-right-radius: 4px;
     border-top-left-radius: 4px;
     background-color: rgb(21, 110, 138);
@@ -21,7 +21,7 @@
     padding-bottom: .3rem;
 }
 
-.logContainer {
+.log-container {
     overflow-y: auto;
     height: 30rem;
     background-color: #101010;
@@ -30,12 +30,19 @@
     border-bottom-right-radius: 4px;
 }
 
-.logLine {
+@media screen and (max-width: 800px) {
+    .log-container {
+        height: 15rem;
+    }
+
+}
+
+.log-line {
     white-space: pre-wrap;
     margin-bottom: 4px;
 }
 
-.iconHolder{
+.log-icon-holder{
     padding-top: 3px;
     filter: drop-shadow(rgb(0, 0, 0) 1px 0px 0px) drop-shadow(rgb(0, 0, 0) 0px 1px 0px) drop-shadow(rgb(0, 0, 0) 0px -1px 0px) drop-shadow(rgb(0, 0, 0) -1px 0px 0px);
 }

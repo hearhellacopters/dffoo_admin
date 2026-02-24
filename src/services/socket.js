@@ -8,9 +8,9 @@ let socket = null;
  */
 let reconnectTimer = null;
 /**
- * @type {"Disconnected" | "Connecting..." | "Connected"}
+ * @type {string}
  */
-let connectionState = "Disconnected";
+export let connectionState = "Disconnected";
 
 const stateListeners = new Set();
 
@@ -22,13 +22,17 @@ let requestId = 0;
 
 let reconnectAttempts = 0;
 
+const protocol = window.location.protocol === "https:" ? "wss:" : "ws:";
+
+export const webhost = `${protocol}//${window.location.host}`;
+
 function notifyState() {
     stateListeners.forEach(fn => fn(connectionState));
 };
 
 /**
  * 
- * @param {"Disconnected" | "Connecting..." | "Connected"} state 
+ * @param {string} state 
  */
 function setState(state) {
     connectionState = state;
@@ -60,12 +64,16 @@ function connect() {
 
     setState("Connecting...");
 
-    const protocol = window.location.protocol === "https:" ? "wss:" : "ws:";
-
-    socket = new WebSocket(`${protocol}//${window.location.host}`);
+    socket = new WebSocket(webhost);
 
     socket.addEventListener("close", (event) => {
         setState("Disconnected");
+
+        console.log('Close code:', event.code);
+
+        console.log('Close reason:', event.reason);
+
+        console.log('Was clean close?', event.wasClean);
 
         scheduleReconnect();
     });
@@ -76,29 +84,29 @@ function connect() {
         setState("Connected");
     });
 
+    socket.addEventListener("error", (event) => {
+        setState("Error");
+
+        console.error('WebSocket error occurred:', event);
+        // Log specific properties (though limited)
+        console.dir(event);
+
+        console.log('Event type:', event.type);
+
+        console.log('Target readyState:', socket?.readyState);
+    })
+
     socket.addEventListener("message", (event) => {
         /**
          * @template {RequestType} T
          * @type {RequestMap[T]["response"]}
          */
         const msg = JSON.parse(event.data);
-        /** non {@link typeMsgSubscribe} */
-        if (msg.type === "error" ||
 
-            msg.type === "downloadLog" ||
-            msg.type === "timeRequest" ||
-            msg.type === "getEnvValues" ||
-            msg.type === "setEnvValue" ||
-            msg.type === "startProcess" ||
-            msg.type === "restartServer" ||
-            msg.type === "shutdownServer" ||
-            msg.type === "installAsset" ||
-            msg.type === "uninstallAsset" ||
-            msg.type === "installPatch" ||
-            msg.type === "uninstallPatch" ||
-            msg.type === "getUserAccounts" ||
-            msg.type === "getSecret" ||
-            msg.type === "switchDevice"
+        /** non {@link typeMsgSubscribe} */
+        if (!(msg.type === "log" ||
+              msg.type === "jobProgress" ||
+              msg.type === "jobComplete")
         ) {
             const resolver = pendingRequests.get(msg.id);
 
@@ -179,7 +187,7 @@ export function subscribe(type, handler) {
 /**
  * Gets connected state
  * 
- * @param {(data: "Disconnected" | "Connecting..." | "Connected") => void} handler 
+ * @param {(data: string) => void} handler 
  * @returns 
  */
 export function subscribeConnectionState(handler) {
@@ -209,13 +217,20 @@ export function subscribeConnectionState(handler) {
  */
 export function request(type, payload) {
     return new Promise((resolve) => {
+        const id = requestId++;
+
         if (!socket || socket.readyState !== WebSocket.OPEN) {
             console.error("WebSocket request made before connection was started.");
-            // @ts-ignore
-            resolve({ type: "error", id: id, payload: { message: "Error, socket undefined" } });
+            
+            resolve({ 
+                //@ts-ignore
+                type: "error", 
+                id: id, 
+                payload: { 
+                    message: "Error, socket undefined" 
+                } 
+            });
         }
-
-        const id = requestId++;
 
         pendingRequests.set(id, resolve);
 

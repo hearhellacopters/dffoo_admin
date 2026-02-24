@@ -1,14 +1,15 @@
-.App {
-    text-align: center;
+.main-holder{
+    margin: 0;
+    padding: 1rem;
 }
 
-a{
-    color: #b7a500
+.sub-header{
+    color: #bbb;
+    font-size: 0.8em;
 }
 
-.adminApp {
+.admin-loading {
     margin: 0 auto;
-    background: #393f47;
     -webkit-text-size-adjust: 100%;
     font-size: 14px;
     font-family: "ヒラギノ角ゴ Pro W3", "Hiragino Kaku Gothic ProN", "游ゴシック", "Yu Gothic", "メイリオ", Meiryo, Osaka, sans-serif, monospace;
@@ -36,6 +37,11 @@ a{
     margin-top: 3px;
     margin-right: 3px;
     margin-bottom: -3px;
+}
+
+.hyperlink{
+    color: #b7a500;
+    text-decoration: underline;
 }
 
 @media (hover: hover) {

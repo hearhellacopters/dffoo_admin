@@ -1,45 +1,86 @@
 import { useEffect, useRef, useState } from "react";
+import ConnectionStatus from "./ConnectionStatus";
 import { FaCopy } from "react-icons/fa";
 import { FaEraser } from "react-icons/fa";
 import { FaDownload } from "react-icons/fa";
 import { startSocket, subscribe, subscribeConnectionState, request } from "../services/socket";
 import '../css/ConsoleLog.css';
 
-export default function ConsoleLog() {
-    const [logs, setLogs] = useState([]);
+/**
+ * Server Console Log Window
+ * 
+ * @param {{isMobile: boolean}} param0 
+ * @returns 
+ */
+export default function ConsoleLog({ isMobile }) {
+    const [htmlLogs, setHtmlLogs] = useState([]);
 
     const [textLogs, setTextLogs] = useState([]);
 
-    const [connectedState, setConnectedState] = useState("disconnected");
+    const [connectedState, setConnectedState] = useState("Disconnected");
 
     const idRef = useRef(0);
-
-    const bottomRef = useRef(null);
 
     useEffect(() => {
         startSocket();
 
         subscribe("log", (data) => {
-            setTextLogs((prev) => [...prev, data.payload.text]);
+            if (textLogs.length < 2000) {
+                setTextLogs((prev) => [...prev, data.payload.text]);
+            }
 
-            setLogs((prev) => [
-                ...prev,
-                {
-                    id: idRef.current++,
-                    html: data.payload.html,
-                }
-            ]);
+            if (htmlLogs.length < 2000) {
+                setHtmlLogs((prev) => [
+                    ...prev,
+                    {
+                        id: idRef.current++,
+                        html: data.payload.html,
+                    }
+                ]);
+            }
         });
 
         return subscribeConnectionState(setConnectedState);
     }, []);
 
+    const containerRef = useRef(null);
+
+    const [autoScroll, setAutoScroll] = useState(true);
+
     useEffect(() => {
-        bottomRef.current?.scrollIntoView({ behavior: "smooth" });
-    }, [logs]);
+        const el = containerRef.current;
+
+        if (!el) return;
+
+        const threshold = 50; // px from bottom
+
+        const atBottom = el.scrollHeight - el.scrollTop - el.clientHeight < threshold;
+
+        if (atBottom && autoScroll) {
+            el.scrollTop = el.scrollHeight;
+        }
+    }, [htmlLogs, autoScroll]);
+
+    useEffect(() => {
+        const el = containerRef.current;
+
+        if (!el) return;
+
+        const handleScroll = () => {
+            const threshold = 50;
+
+            const atBottom = el.scrollHeight - el.scrollTop - el.clientHeight < threshold;
+
+            setAutoScroll(atBottom);
+        };
+
+        el.addEventListener("scroll", handleScroll);
+
+        return () => el.removeEventListener("scroll", handleScroll);
+    }, []);
 
     function clearLogs() {
-        setLogs([]);
+        setHtmlLogs([]);
     };
 
     async function copyToClipboard() {
@@ -80,7 +121,7 @@ export default function ConsoleLog() {
 
         try {
             const successful = document.execCommand('copy');
-            
+
             if (successful) {
                 alert('Copied log to clipboard!');
             } else {
@@ -93,14 +134,14 @@ export default function ConsoleLog() {
         document.body.removeChild(textArea);
     };
 
-    async function downloadLog (){
+    async function downloadLog() {
         const res = await request("downloadLog");
 
-        if(res.type != "error"){
+        if (res.type != "error") {
             // text content
             const texts = res.payload.text;
             // file object
-            const file = new Blob([texts], {type: 'text/plain'});
+            const file = new Blob([texts], { type: 'text/plain' });
             // anchor link
             const element = document.createElement("a");
 
@@ -108,7 +149,7 @@ export default function ConsoleLog() {
 
             element.download = res.payload.name;
             // simulate link click (Required for this to work in FireFox)
-            document.body.appendChild(element); 
+            document.body.appendChild(element);
 
             element.click();
 
@@ -119,26 +160,32 @@ export default function ConsoleLog() {
     }
 
     return (
-        <div className="logWraper">
-            <h2 className="logHeader">
-                <span style={{ marginLeft: "3px" }}><sup title={connectedState} style={{ color: connectedState == "Connected" ? "#07ff07": connectedState == "Connecting..." ? "#FFEB3B" : "#ff0000" }}>●</sup>Live Console Log{connectedState != "Connected" ? ` - ${connectedState}`: ""}</span>
-                <span className="iconHolder">
-                    <FaDownload title="Download Current Server Log File" className="clicky svgIcon" onClick={downloadLog}/>
+        <div className="log-wraper" style={isMobile ? { fontSize: "8px" } : {}}>
+            <h2 className="log-header">
+                <span style={{ marginLeft: "3px" }}>
+                    <sup>
+                        <ConnectionStatus/>
+                    </sup>
+                    Live Console Log
+                        {textLogs.length == 2000 ? <span title="Log is full, reload window!" style={{color: "#ff0000"}}>!</span> : ""}
+                        {isMobile ? "" : connectedState != "Connected" ? ` - ${connectedState}` : ""}
+                </span>
+                <span className="log-icon-holder">
+                    <FaDownload title="Download Current Server Log File" className="clicky svgIcon" onClick={downloadLog} />
                     <span>{" "}</span>
                     <FaCopy title="Copy Log" className="clicky svgIcon" onClick={copyToClipboard} />
                     <span>{" "}</span>
                     <FaEraser title="Clear Log" className="clicky svgIcon" onClick={clearLogs} />
                 </span>
             </h2>
-            <div className="logContainer">
-                {logs.map((log) => (
+            <div className="log-container" ref={containerRef}>
+                {htmlLogs.map((log) => (
                     <div
                         key={log.id}
-                        className="logLine"
+                        className="log-line"
                         dangerouslySetInnerHTML={{ __html: log.html }}
                     />
                 ))}
-                <div ref={bottomRef} />
             </div>
         </div>
     );

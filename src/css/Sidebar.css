@@ -1,0 +1,31 @@
+.sidebar {
+    width: 220px;
+    background-color: #1b1b1b;
+    border-right: 1px solid #333;
+}
+
+.sidebar-menu{
+    display: flex;
+    flex-direction: column;
+    padding-top: 10px;
+    padding-left: 16px;
+    font-size: 13px;
+    color: #bbb;
+    transition: all 0.15s ease;
+}
+
+.sidebar-menu-item {
+    display: flex;
+    flex-direction: column;
+    padding: 10px 16px;
+    cursor: pointer;
+    font-size: 13px;
+    color: #bbb;
+    transition: all 0.15s ease;
+}
+
+.sidebar-active-item {
+    background-color: #2a2a2a;
+    color: #fff;
+    font-weight: bold;
+}

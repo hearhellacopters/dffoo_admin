@@ -1,11 +1,16 @@
 // @ts-check
 /**
  * @typedef {import('node:querystring').ParsedUrlQuery} ParsedUrlQuery
- * @typedef {import('buffer').Buffer} Buffer
- * @typedef {import('http').IncomingMessage} IncomingMessage
- * @typedef {import('http').ServerResponse} ServerResponse
- * @typedef {ServerResponse & {req: IncomingMessage}} res
+ * @typedef {import('buffer').Buffer} Buffer 
+ * @typedef {import('http')} http
+ * @typedef {import('https')} https
  * @typedef {import('ws')} WebSocket
+ * @typedef {import('http').IncomingMessage} IncomingMessage
+ * @typedef {import('http').Server} HTMLServer
+ * @typedef {import('http').ServerResponse} ServerResponse
+ * @typedef {import('https').Server} HTMLSServer
+ * @typedef {ServerResponse & {req: IncomingMessage}} res
+ * @typedef {{server?: HTMLServer | HTMLSServer, admin_server?: HTMLServer | HTMLSServer, admin_wss?: WebSocketServer, clients: Set<WebSocket>, sessions?: Map<string, boolean>}} INSTANCE
  */
 
 const { WebSocketServer } = require("ws");
@@ -44,50 +49,6 @@ const PORT = 9000;
 const SERVER_URL = `http://${IP_ADDRESS}:${PORT}/`;
 
 /**
- * Logger base class. Not to be used outside of ``Logger``
- * 
- * @class
- */
-class _CustomLog {
-    constructor() {
-    }
-    /**
-     * Log function.
-     * @param {string} type - log type
-     * @param {string} level - file and location
-     * @param {string|number|object|boolean|undefined} text - message
-     */
-    log(type, level, text) {
-        var message = text;
-        if (typeof message == "number" ||
-            typeof message == "boolean") {
-            message = `${text}`;
-        } else if (typeof message == "object" && !(message instanceof Error)) {
-            message = JSON.stringify(text, null, 4);
-        } else if (message == undefined) {
-            message = "undefined";
-        } else if (message instanceof Error) {
-            message = "undefined";
-        }
-
-        switch (type) {
-            case "error":
-                console.error(level, message);
-                break;
-            case "warn":
-                console.warn(level, message);
-                break;
-            case "log":
-            default:
-                console.log(level, message);
-                break;
-        }
-    }
-};
-
-const _cl = new _CustomLog();
-
-/**
  * Class Logger. 
  * 
  * ```js 
@@ -110,8 +71,75 @@ const _cl = new _CustomLog();
  * Only creates log if matching log level is met.
  */
 class Logger {
-    constructor() {
+    /**
+     * File path to log
+     * @type {string?}
+     */
+    static logPath = "";
+
+    #label = "";
+
+    #startTime = 0;
+    /**
+     * Only need a new constructor when using a timer with ``.end()``.
+     * 
+     * @param {string} label - Label for timer in logs.
+     */
+    constructor(label) {
+        if (typeof label == "string") {
+            this.#label = label;
+        }
+    };
+
+    /**
+     * Creates logPath
+     */
+    static init(){
+        this.logPath = "";
+    };
+
+    /**
+     * Writes to log function.
+     * 
+     * @param {string} type - log type
+     * @param {string} level - file and or location
+     * @param {string|number|object|boolean|undefined} text - message
+     */
+    static write(type, level, text) {
+        if(this.logPath == null){
+            this.init();
+        }
+
+        var message = text;
+
+        if (typeof message == "number" ||
+            typeof message == "boolean") {
+            message = `${text}`;
+        } else if (typeof message == "object" && !(message instanceof Error)) {
+            message = JSON.stringify(text, null, 4);
+        } else if (message == undefined) {
+            message = "undefined";
+        } else if (message instanceof Error) {
+            message = "undefined";
+        }
+
+        switch (type) {
+            case "error":
+                console.error(level, message);
+
+                break;
+            case "warn":
+                console.warn(level, message);
+
+                break;
+            case "log":
+            default:
+                console.log(level, message);
+
+                break;
+        }
     }
+
     /**
      * A ``console.log()`` with file and location.
      * 
@@ -159,6 +187,10 @@ class Logger {
      * @param {any[]} message - Message to log.
      */
     static info(...message) {
+        if(this.logPath == null){
+            this.init();
+        }
+
         for (var key = 0; key < message.length; key++) {
             const text = message[key];
 
@@ -175,7 +207,7 @@ class Logger {
             }
         }
 
-        _cl.log("log", `${C_HEX.cyan}[info]${C_HEX.reset}`, message.join(""));
+        this.write("log", `${C_HEX.cyan}[info]${C_HEX.reset}`, message.join(""));
     };
 
     /**
@@ -186,6 +218,10 @@ class Logger {
      * @param {any[]} message - Message to log
      */
     static error(...message) {
+        if(this.logPath == null){
+            this.init();
+        }
+        
         for (var key = 0; key < message.length; key++) {
             const text = message[key];
 
@@ -220,7 +256,7 @@ class Logger {
 
         hours = hours % 12 || 12;
 
-        _cl.log("error", `${C_HEX.red}[error][${hours}.${minutes}.${seconds}]${C_HEX.reset} ${fileName ? fileName : ""} -`, message.join(" "));
+        this.write("error", `${C_HEX.red}[error][${hours}.${minutes}.${seconds}]${C_HEX.reset} ${fileName ? fileName : ""} -`, message.join(" "));
     };
 
     /**
@@ -231,6 +267,10 @@ class Logger {
      * @param {any[]} message - Message to log
      */
     static warn(...message) {
+        if(this.logPath == null){
+            this.init();
+        }
+        
         for (var key = 0; key < message.length; key++) {
             const text = message[key];
 
@@ -257,7 +297,7 @@ class Logger {
 
         hours = hours % 12 || 12;
 
-        _cl.log("warn", `${C_HEX.magenta}[warn] [${hours}.${minutes}.${seconds}]${C_HEX.reset}`, message.join(" "));
+        this.write("warn", `${C_HEX.magenta}[warn] [${hours}.${minutes}.${seconds}]${C_HEX.reset}`, message.join(" "));
     };
 
     /**
@@ -268,6 +308,10 @@ class Logger {
      * @param {any[]} message - Message to log
      */
     static debug(...message) {
+        if(this.logPath == null){
+            this.init();
+        }
+        
         for (var key = 0; key < message.length; key++) {
             const text = message[key];
 
@@ -302,7 +346,7 @@ class Logger {
 
         hours = hours % 12 || 12;
 
-        _cl.log("log", `${C_HEX.green}[debug][${hours}.${minutes}.${seconds}]${C_HEX.reset} ${fileName ? fileName : ""} -`, message.join(" "));
+        this.write("log", `${C_HEX.green}[debug][${hours}.${minutes}.${seconds}]${C_HEX.reset} ${fileName ? fileName : ""} -`, message.join(" "));
     }
 };
 
@@ -442,7 +486,7 @@ function ansiToHtml(input) {
         return text.replace(urlRegex, (url) => {
             const href = url.startsWith("http") ? url : `https://${url}`;
 
-            return `<a href="${href}" target="_blank" rel="noopener noreferrer">${url}</a>`;
+            return `<a class="hyperlink clicky" href="${href}" target="_blank" rel="noopener noreferrer">${url}</a>`;
         });
     }
 
@@ -485,14 +529,21 @@ function ansiToHtml(input) {
 };
 
 /**
+ * @type {INSTANCE}
+ */
+const INSTANCE = {
+    clients: new Set()
+};
+
+/**
  * Creates admin panel server
  */
 async function admin_panel() {
     const ADMIN_URL = `http://${IP_ADDRESS}:${PORT}/`;
 
-    const clients = new Set();
+    INSTANCE.clients = new Set();
 
-    const admin_server = http.createServer(async (req, res) => {
+    INSTANCE.admin_server != undefined ? INSTANCE.admin_server : INSTANCE.admin_server = http.createServer(async (req, res) => {
         if (req.method === 'OPTIONS') {
             // Set CORS headers
             res.setHeader('Access-Control-Allow-Origin', '*'); // Allow requests from any origin
@@ -526,7 +577,7 @@ async function admin_panel() {
         }
     });
 
-    const wss = new WebSocketServer({ noServer: true });
+    INSTANCE.admin_wss != undefined ? INSTANCE.admin_wss : INSTANCE.admin_wss = new WebSocketServer({ noServer: true });
     /**
      * Broadcast message to all connected admin clients.
      * 
@@ -535,7 +586,7 @@ async function admin_panel() {
     function broadcast(message) {
         const payload = JSON.stringify(message);
 
-        for (const client of clients) {
+        for (const client of INSTANCE.clients) {
             if (client.readyState === 1) {
                 client.send(payload);
             }
@@ -577,11 +628,9 @@ async function admin_panel() {
 
             const message = args.join(" ");
 
-            const text = message.replace(regexRemove, '');
-
-            CURRENT_LOG.push(text);
-
-            broadcast({ type: "log", id: ID++, payload: { text: text, html: C_HEX.ansiToHtml(message) } });
+            if (INSTANCE.clients.size != 0) {
+                broadcast({ type: "log", id: ID++, payload: { text: message.replace(regexRemove, ''), html: C_HEX.ansiToHtml(message) } });
+            }
         };
 
         console.error = (...args) => {
@@ -589,11 +638,9 @@ async function admin_panel() {
 
             const message = args.join(" ");
 
-            const text = message.replace(regexRemove, '');
-
-            CURRENT_LOG.push(text);
-
-            broadcast({ type: "log", id: ID++, payload: { text: text, html: C_HEX.ansiToHtml(message) } });
+            if (INSTANCE.clients.size != 0) {
+                broadcast({ type: "log", id: ID++, payload: { text: message.replace(regexRemove, ''), html: C_HEX.ansiToHtml(message) } });
+            }
         };
 
         console.warn = (...args) => {
@@ -601,25 +648,23 @@ async function admin_panel() {
 
             const message = args.join(" ");
 
-            const text = message.replace(regexRemove, '');
-
-            CURRENT_LOG.push(text);
-
-            broadcast({ type: "log", id: ID++, payload: { text: text, html: C_HEX.ansiToHtml(message) } });
+            if (INSTANCE.clients.size != 0) {
+                broadcast({ type: "log", id: ID++, payload: { text: message.replace(regexRemove, ''), html: C_HEX.ansiToHtml(message) } });
+            }
         };
     };
 
     /**
      * Critical: Authenticate BEFORE upgrade.
      */
-    admin_server.on("upgrade", (request, socket, head) => {
-        wss.handleUpgrade(request, socket, head, (ws) => {
-            wss.emit("connection", ws, request);
+    INSTANCE.admin_server.on("upgrade", (request, socket, head) => {
+        INSTANCE.admin_wss?.handleUpgrade(request, socket, head, (ws) => {
+            INSTANCE.admin_wss?.emit("connection", ws, request);
         });
     });
 
-    wss.on("connection", (ws) => {
-        clients.add(ws);
+    INSTANCE.admin_wss.on("connection", (ws) => {
+        INSTANCE.clients.add(ws);
 
         ws.on("message", async (raw) => {
             try {
@@ -645,14 +690,16 @@ async function admin_panel() {
             }
         });
 
-        ws.on("close", () => clients.delete(ws));
+        ws.on("close", () => INSTANCE.clients.delete(ws));
     });
 
     interceptConsole();
     // Start the Admin Panel
-    admin_server.listen(PORT, () => {
+    INSTANCE.admin_server.listen(PORT, () => {
         Logger.info(`Admin Panel active on ${C_HEX.cyan}${ADMIN_URL}adminPanel${C_HEX.reset}`);
     });
+
+    return INSTANCE;
 };
 
 /**
@@ -749,8 +796,9 @@ function fileExists(filePath) {
  * @param {ServerResponse} res - Message Response
  */
 function _handle_admin_route(body, file, urlParams, ipAddress = "", res) {
+    const isFile = /^.+\.(css|js|jpg|jpeg|gif|png|ico|gz|svg|svgz|ttf|otf|woff|woff2|eot|mp4|ogg|ogv|webm|webp|zip|swf)$/;
     // get endpoint requested file
-    if (file == "/adminPanel" || file == "/" || file == "") {
+    if (!isFile.test(file)) {
         file = 'index.html';
     }
     // Construct the path to the file in the adminPanel folder
@@ -766,7 +814,7 @@ function _handle_admin_route(body, file, urlParams, ipAddress = "", res) {
         return;
     }
     // Read the content of the file
-    fs.readFile(indexPath, 'utf8', (err, data) => {
+    fs.readFile(indexPath, (err, data) => {
         if (err) {
             Logger.error(`Asset missing for admin page: ${indexPath}`);
 
@@ -805,32 +853,83 @@ function _handle_admin_route(body, file, urlParams, ipAddress = "", res) {
 
             res.setHeader("Content-Type", mime);
 
-            if (typeof data != "string") {
-                data = JSON.stringify(data);
-            }
-
             res.end(data);
         }
     });
 };
 
 /**
+ * Updates or insert environment variable in .env file.
+ * 
+ * @example
+ * ```js
+ * updateEnvVariable({key: "API_KEY", value: "new-secret-key"});
+ * ```
+ * 
+ * @param {{key: string, value: string}} updateValue - key and value to change
+ */
+function updateEnvVariable(updateValue) {
+    var updated = false;
+
+    const {
+        key,
+        value
+    } = updateValue;
+
+    if(ENV_VALUES[key] != value){
+        ENV_VALUES[key] = value;
+
+        updated = true;
+    }
+
+    if (updated) {
+        Logger.info(`Updated .env ${updateValue.key}="${updateValue.value}"`);
+
+        Logger.info(`Please restart server for changes to take affect.`);
+
+        return true;
+    }
+
+    return false;
+};
+
+/**
  * Restarts server
  * 
- * @param {string|undefined} args - arguments for restart
+ * @param {boolean?} closeAdmin
  */
-function restart(args = undefined) {
-    process.on("exit", function () {
-        const argv = args || process.argv && process.argv.shift();
+async function restart(closeAdmin = false) {
+    if(closeAdmin){
+        await new Promise((resolve) => {
+            if(INSTANCE.admin_server == undefined){
+                resolve(true);
+            } else {
+                INSTANCE.admin_server.close(resolve);
 
-        require("child_process").spawn(argv || "", process.argv, {
-            cwd: _get_dir_name(),
-            detached: true,
-            stdio: "inherit"
+                INSTANCE.admin_server == undefined;
+            }
         });
-    });
 
-    process.exit();
+        await new Promise((resolve) => {
+            if(INSTANCE.admin_wss == undefined){
+                resolve(true);
+            } else {
+                INSTANCE.admin_wss.close(resolve);
+
+                INSTANCE.admin_wss == undefined;
+            }
+        });
+
+        //INSTANCE.sessions?.clear();
+        
+        for (const ws of INSTANCE.clients) {
+            ws.close();
+        }
+
+        await admin_panel();
+    }
+
+    Logger.info("Restart complete!");
 };
 
 /**
@@ -883,7 +982,7 @@ function _admin_websocket_functions(send, ws, msg, jobId) {
                     payload: { success: true }
                 });
 
-                restart();
+                restart(false);
             }
             break;
         case "shutdownServer":
@@ -944,9 +1043,7 @@ function _admin_websocket_functions(send, ws, msg, jobId) {
                         payload: { message: "Key Error." }
                     });
                 } else {
-                    values[msg.payload.key] = msg.payload.value;
-
-                    const success = true;
+                    const success = updateEnvVariable({ key: msg.payload.key, value: `${msg.payload.value}` });
 
                     send(ws, {
                         type: "setEnvValue",
