@@ -22,6 +22,7 @@
     font-size: 13px;
     color: #bbb;
     transition: all 0.15s ease;
+    text-decoration: none;
 }
 
 .sidebar-active-item {
