@@ -45,39 +45,23 @@ export default function ConsoleLog({ isMobile }) {
 
     const containerRef = useRef(null);
 
-    const [autoScroll, setAutoScroll] = useState(true);
+    const messagesEndRef = useRef(null);
 
-    useEffect(() => {
-        const el = containerRef.current;
+    const scrollToBottomIfNeeded = () => {
+        if (!containerRef.current) return;
 
-        if (!el) return;
+        const { scrollTop, scrollHeight, clientHeight } = containerRef.current;
 
-        const threshold = 50; // px from bottom
+        const isNearBottom = scrollHeight - scrollTop - clientHeight < 150;
 
-        const atBottom = el.scrollHeight - el.scrollTop - el.clientHeight < threshold;
-
-        if (atBottom && autoScroll) {
-            el.scrollTop = el.scrollHeight;
+        if (isNearBottom) {
+            messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
         }
-    }, [htmlLogs, autoScroll]);
+    };
 
     useEffect(() => {
-        const el = containerRef.current;
-
-        if (!el) return;
-
-        const handleScroll = () => {
-            const threshold = 50;
-
-            const atBottom = el.scrollHeight - el.scrollTop - el.clientHeight < threshold;
-
-            setAutoScroll(atBottom);
-        };
-
-        el.addEventListener("scroll", handleScroll);
-
-        return () => el.removeEventListener("scroll", handleScroll);
-    }, []);
+        scrollToBottomIfNeeded();
+    }, [htmlLogs]);
 
     function clearLogs() {
         setHtmlLogs([]);
@@ -164,11 +148,11 @@ export default function ConsoleLog({ isMobile }) {
             <h2 className="log-header">
                 <span style={{ marginLeft: "3px" }}>
                     <sup>
-                        <ConnectionStatus/>
+                        <ConnectionStatus />
                     </sup>
                     Live Console Log
-                        {textLogs.length == 2000 ? <span title="Log is full, reload window!" style={{color: "#ff0000"}}>!</span> : ""}
-                        {isMobile ? "" : connectedState != "Connected" ? ` - ${connectedState}` : ""}
+                    {textLogs.length == 2000 ? <span title="Log is full, reload window!" style={{ color: "#ff0000" }}>!</span> : ""}
+                    {isMobile ? "" : connectedState != "Connected" ? ` - ${connectedState}` : ""}
                 </span>
                 <span className="log-icon-holder">
                     <FaDownload title="Download Current Server Log File" className="clicky svgIcon" onClick={downloadLog} />
@@ -186,6 +170,7 @@ export default function ConsoleLog({ isMobile }) {
                         dangerouslySetInnerHTML={{ __html: log.html }}
                     />
                 ))}
+                <div ref={messagesEndRef} />
             </div>
         </div>
     );

@@ -205,21 +205,23 @@ export default function Settings({setNeedsRestart}) {
                 <div>
                     <h3>Server Region</h3>
 
-                    <label htmlFor="JP">
-                        <input type="radio"
-                            name="JP/GL"
-                            value="JP"
+                    <label for="JP" htmlFor="JP">
+                        <input 
+                            type="radio"
+                            name="JP"
                             id="JP"
+                            value="JP"
                             checked={region === 'JP'}
                             onChange={handleToggle} />
                         JP (Japan)
                     </label>
                     <br />
-                    <label htmlFor="GL">
-                        <input type="radio"
-                            name="JP/GL"
-                            value="GL"
+                    <label for="GL" htmlFor="GL">
+                        <input 
+                            type="radio"
+                            name="GL"
                             id="GL"
+                            value="GL"
                             checked={region === 'GL'}
                             onChange={handleToggle} />
                         GL (Global)
@@ -229,9 +231,13 @@ export default function Settings({setNeedsRestart}) {
                 <h3>Network Configuration</h3>
 
                 <div className="ip-port">
-                    <label>IP Address (v4): </label>
+                    <label for="IP">
+                        IP Address (v4): 
+                    </label>
                     <input
                         type="text"
+                        name="IP"
+                        id="IP"
                         value={ip}
                         onChange={(e) => setIp(e.target.value)}
                         placeholder="127.0.0.1"
@@ -240,9 +246,13 @@ export default function Settings({setNeedsRestart}) {
                 </div>
 
                 <div className="ip-port">
-                    <label>Port: </label>
+                    <label for="PORT">
+                        Port: 
+                    </label>
                     <input
                         type="number"
+                        name="PORT"
+                        id="PORT"
                         value={port}
                         onChange={(e) => setPort(e.target.value)}
                         placeholder="8000"

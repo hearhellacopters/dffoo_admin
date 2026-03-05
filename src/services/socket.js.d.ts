@@ -5,6 +5,7 @@
 // "error"          // response only
 // "timeRequest"    // request & response
 // "getEnvValues"   // request & response
+// "getConstValues" // request & response
 // "setEnvValue"    // request & response
 // "startProcess"   // request & response
 // "test"           // request & response
@@ -28,10 +29,11 @@ type id = number;
 /**
  * Single response type
  */
-type typeMsgRequests =
+export type typeMsgRequests =
     | "downloadLog"
     | "timeRequest"
     | "getEnvValues"
+    | "getConstValues"
     | "setEnvValue"
     | "startProcess"  // w/ jobId
     | "test"
@@ -43,6 +45,7 @@ type typeMsgRequests =
     | "uninstallPatch"// w/ jobId
     | "getUserAccounts"
     | "getSecret"
+    | "checkServerVersion"
     | "switchDevice";
 
 /**
@@ -50,12 +53,12 @@ type typeMsgRequests =
  * 
  * Jobs use `jobId` to track
  */
-type typeMsgSubscribe =
+export type typeMsgSubscribe =
     | "log"
     | "jobProgress"
     | "jobComplete";
 
-interface RequestMap {
+export interface RequestMap {
     /**
      * response only
      */
@@ -70,8 +73,8 @@ interface RequestMap {
             id: id,
             payload: {
                 /**
-             * Log message as text
-             */
+                 * Log message as text
+                 */
                 text: string,
                 /**
                  * Log message as html
@@ -139,6 +142,23 @@ interface RequestMap {
                  * Server time
                  */
                 time: string
+            }
+        }
+    },
+    getConstValues:{
+        request: {
+            type: "getConstValues",
+            id: id,
+            payload: any
+        },
+        response: {
+            type: "getConstValues",
+            id: id,
+            payload: {
+                /**
+                 * Server const key and value
+                 */
+                [key: string]: any
             }
         }
     },
@@ -224,6 +244,22 @@ interface RequestMap {
             }
         }
     },
+    checkServerVersion: {
+        request: {
+            type: "checkServerVersion",
+            id: id,
+            payload: any
+        },
+        response: {
+            type: "checkServerVersion",
+            id: id,
+            payload: {
+                update: boolean,
+                version: string,
+                urls: string[]
+            }
+        }
+    },
     /**
      * response only
      */
@@ -276,7 +312,7 @@ interface RequestMap {
                 /**
                  * % of 100
                  */
-                progress: number
+                success: boolean
             }
         }
     },
@@ -326,7 +362,11 @@ interface RequestMap {
                 /**
                  * Device version
                  */
-                os: "Andorid" | "iOs"
+                os: "Android" | "iOS",
+                /**
+                 * delete zip after downloading
+                 */
+                deleteAfter : boolean
             }
         },
         response: {
@@ -360,7 +400,7 @@ interface RequestMap {
                 /**
                  * Device version
                  */
-                os: "Andorid" | "iOs"
+                os: "Android" | "iOS"
             }
         },
         response: {
@@ -392,9 +432,9 @@ interface RequestMap {
                  */
                 patch: string,
                 /**
-                 * Patch version number
+                 * delete zip after downloading
                  */
-                version: "Andorid" | "iOs"
+                deleteAfter : boolean
             }
         },
         response: {
@@ -424,11 +464,7 @@ interface RequestMap {
                 /**
                  * Patch name
                  */
-                patch: string,
-                /**
-                 * Patch version number
-                 */
-                version: "Andorid" | "iOs"
+                patch: string
             }
         },
         response: {
@@ -455,10 +491,9 @@ interface RequestMap {
             type: "getUserAccounts",
             id: id,
             payload: {
-                /**
-                 * Request a single account or get all.
-                 */
-                account?: string
+                uuid?: string;
+                player_id?: string;
+                ip_address?: string;
             }
         },
         response: {
@@ -472,7 +507,12 @@ interface RequestMap {
                 /**
                  * Return only. TDB account infos
                  */
-                accounts: any[]
+                accounts: {
+                    id: number;
+                    uuid: string;
+                    player_id: string;
+                    ip_address: string;
+                }[]
             }
         }
 
@@ -534,7 +574,7 @@ interface RequestMap {
 /**
  * Basic message types
  */
-type RequestType = keyof RequestMap;
+export type RequestType = keyof RequestMap;
 
 /**
  * Creates connection to server. Must be at start of `useEffect` in any componets. 

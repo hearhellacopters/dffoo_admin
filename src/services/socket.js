@@ -1,5 +1,12 @@
 //@ts-check
 /**
+ * @typedef {import('./socket.js.d.ts').RequestMap} RequestMap
+ * @typedef {import('./socket.js.d.ts').RequestType} RequestType
+ * @typedef {import('./socket.js.d.ts').typeMsgSubscribe} typeMsgSubscribe
+ * @typedef {import('./socket.js.d.ts').typeMsgRequests} typeMsgRequests
+ */
+
+/**
  * @type {WebSocket?}
  */
 let socket = null;
@@ -221,15 +228,18 @@ export function request(type, payload) {
 
         if (!socket || socket.readyState !== WebSocket.OPEN) {
             console.error("WebSocket request made before connection was started.");
-            
-            resolve({ 
-                //@ts-ignore
+            /**
+             * @type {RequestMap["error"]["response"]}
+             */
+            const response = { 
                 type: "error", 
                 id: id, 
                 payload: { 
                     message: "Error, socket undefined" 
-                } 
-            });
+                }
+            };
+            // @ts-ignore
+            resolve(response);
         }
 
         pendingRequests.set(id, resolve);
