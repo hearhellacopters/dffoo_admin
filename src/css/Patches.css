@@ -1,0 +1,13 @@
+.patches-table {
+    margin: 10px;
+    border: 3px solid #efefef;
+
+}
+
+th, td {
+    padding: 10px;
+}
+
+button {
+    margin-top: 10px;
+}
