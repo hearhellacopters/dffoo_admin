@@ -69,7 +69,7 @@ export default function ExampleButtons({setNeedsRestart}) {
                     setStatus(data.payload.status);
                 },
                 onComplete: (data) => {
-                    setProgress(data.payload.progress);
+                    setProgress(data.payload.success ? 100 : 0);
 
                     setStatus(data.payload.status);
 
@@ -105,7 +105,8 @@ export default function ExampleButtons({setNeedsRestart}) {
             <br />
             <button type="button" onClick={startBigProcess}>Run Process Test</button>
             <br />
-            {progress != "" ? `${progress}% - ${status}` : ""}
+            {progress != "" ? <progress value={progress}  max={100}>{`${progress}%`}</progress>: ""}
+            {progress != "" ? ` - ${status}` : ""}
         </div>
     );
 }

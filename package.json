@@ -1,6 +1,6 @@
 {
   "name": "dffoo_admin_panel",
-  "version": "0.0.5",
+  "version": "0.0.8",
   "private": true,
   "type": "module",
   "scripts": {
@@ -15,7 +15,6 @@
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
     "react-icons": "^5.5.0",
-    "react-lazy-load-image-component": "^1.6.3",
     "react-router-dom": "^7.1.5"
   },
   "devDependencies": {

@@ -11,6 +11,7 @@
  * @typedef {import('https').Server} HTMLSServer
  * @typedef {ServerResponse & {req: IncomingMessage}} res
  * @typedef {{server?: HTMLServer | HTMLSServer, admin_server?: HTMLServer | HTMLSServer, admin_wss?: WebSocketServer, clients: Set<WebSocket>, sessions?: Map<string, boolean>}} INSTANCE
+ * @typedef {import('./socket.js.d.ts').RequestMap} RequestMap
  */
 
 const { WebSocketServer } = require("ws");
@@ -22,7 +23,7 @@ const os = require('os');
 /**
  * Master function for finding machine IP address.
  * 
- * @returns {string} example ``'127.0.0.1'``
+ * @returns {string} example `'127.0.0.1'`
  */
 function _get_local_IPv4_address() {
     const interfaces = os.networkInterfaces();
@@ -350,52 +351,94 @@ class Logger {
     }
 };
 
-/**
- * @type {{[key: string]: any}}
- */
-const ENV_VALUES = {
-    /**
-     * in minutes
-     */
+const CURRENT_CONST_VALUES = {
+  ARGV: {},
+  DIR_NAME: 'c:\\Users\\D\\Documents\\NodeProjects\\dffoo_server',
+  ENV_FILE_PATH: 'c:\\Users\\D\\Documents\\NodeProjects\\dffoo_server\\.env',
+  CURRENT_ENV_VALUES: {
     BACKUP: 30,
-    /**
-     * Game version running
-     * @type {"GL"|"JP"}
-     */
     VER: 'GL',
-    /**
-     * IP Address running the server on.
-     */
     IP_ADDRESS: '192.168.0.110',
-    /**
-     * Port running the server on.
-     */
     PORT: '8000',
-    /**
-     * If the server uses https or not
-     */
     USE_HTTPS: false,
-    /**
-     * If the admin panel is active
-     */
     ADMIN_PANEL: true,
-    /**
-     * Admin panel port running the server on.
-     */
-    ADMIN_PORT: '8080',
-    /**
-     * Admin username
-     */
+    ADMIN_PORT: '8081',
     ADMIN_USERNAME: 'admin',
-    /**
-     * Admin password
-     */
     ADMIN_PASSWORD: 'password',
-    /**
-     * Log level
-     */
-    LOG_LEVEL: 'error'
-};
+    LOG_LEVEL: 'debug'
+  },
+  DEFAULT_ENV_VALUES: [
+    {
+      desc: '; How often a DB backup is made in minutes.',
+      key: 'BACKUP',
+      value: '30'
+    },
+    { desc: '; Version of the game to run.', key: 'VER', value: 'GL' },
+    {
+      desc: '; For statically setting the IP Address of the host machine.',
+      key: 'IP_ADDRESS',
+      value: ''
+    },
+    {
+      desc: '; Port to run the server on.',
+      key: 'PORT',
+      value: '8000'
+    },
+    {
+      desc: '; Uses https server instead of http. Must have key.pem & cert.pem in program root directory.',
+      key: 'USE_HTTPS',
+      value: 'false'
+    },
+    {
+      desc: '; Enables the admin panel website at http://localhost:[ADMIN_PORT]/adminPanel',
+      key: 'ADMIN_PANEL',
+      value: 'true'
+    },
+    {
+      desc: '; Port to run admin panel on.',
+      key: 'ADMIN_PORT',
+      value: '8081'
+    },
+    {
+      desc: '; Admin panel username.',
+      key: 'ADMIN_USERNAME',
+      value: 'admin'
+    },
+    {
+      desc: '; Admin panel password.',
+      key: 'ADMIN_PASSWORD',
+      value: 'password'
+    },
+    {
+      desc: '; Logger level.\n' +
+        '; debug = Logs everything\n' +
+        '; warn  = Logs basic and stuff to look out for\n' +
+        '; error = Logs just info and errors\n' +
+        '; info  = Just the basics are logged\n' +
+        '; Recommended as "error"',
+      key: 'LOG_LEVEL',
+      value: 'error'
+    }
+  ],
+  BACKUP: 30,
+  SERVER_DB_PATH: 'c:\\Users\\D\\Documents\\NodeProjects\\dffoo_server\\db\\server.json',
+  USERS_DB_PATH:  'c:\\Users\\D\\Documents\\NodeProjects\\dffoo_server\\db\\GL\\users.db',
+  SERVER_VERSION: '0.0.1',
+  USE_HTTPS: false,
+  LOG_LEVEL: 'debug',
+  VER: 'GL',
+  IP_ADDRESS: '192.168.0.110',
+  PORT: '8000',
+  SERVER_URL: 'http://192.168.0.110:8000/',
+  CLIENT_MVER: 35500100,
+  CLIENT_VER: { GL: 1035001, JP: 1082000 },
+  ADMIN_PANEL: true,
+  ADMIN_PORT: '8081',
+  ADMIN_USERNAME: 'admin',
+  ADMIN_PASSWORD: 'password',
+  MACHINE_ARCH: 'x64',
+  MACHINE_OS: 'win32'
+}
 
 /**
  * Base path where server is running.
@@ -668,9 +711,6 @@ async function admin_panel() {
 
         ws.on("message", async (raw) => {
             try {
-                /**
-                 * @type {{type:string, id:number, payload:any}}
-                 */
                 const msg = JSON.parse(raw.toString());
 
                 if(msg.type != undefined){
@@ -679,13 +719,17 @@ async function admin_panel() {
                     send(ws, {
                         type: "error",
                         id: msg.id,
-                        payload: { message: "Unknown action" }
+                        payload: { 
+                            message: "Unknown action" 
+                        }
                     });
                 }
             } catch {
                 send(ws, {
                     type: "error",
-                    payload: { message: "Invalid message format" }
+                    payload: { 
+                        message: "Invalid message format" 
+                    }
                 });
             }
         });
@@ -698,8 +742,6 @@ async function admin_panel() {
     INSTANCE.admin_server.listen(PORT, () => {
         Logger.info(`Admin Panel active on ${C_HEX.cyan}${ADMIN_URL}adminPanel${C_HEX.reset}`);
     });
-
-    return INSTANCE;
 };
 
 /**
@@ -875,9 +917,10 @@ function updateEnvVariable(updateValue) {
         key,
         value
     } = updateValue;
-
-    if(ENV_VALUES[key] != value){
-        ENV_VALUES[key] = value;
+    // @ts-ignore
+    if(CURRENT_CONST_VALUES.CURRENT_ENV_VALUES[key] != value){
+        // @ts-ignore
+        CURRENT_CONST_VALUES.CURRENT_ENV_VALUES[key] = value;
 
         updated = true;
     }
@@ -965,9 +1008,10 @@ function humanReadable(date = undefined) {
 /**
  * Test WebSocket functions
  * 
+ * @template {keyof RequestMap} T
  * @param {(ws: WebSocket, message: any) => void} send send back to client
  * @param {WebSocket} ws WebSocket client
- * @param {{type: string, id: number, payload: any}} msg current message
+ * @param {RequestMap[T]["request"]} msg current message
  * @param {number} jobId job unque id
  */
 function _admin_websocket_functions(send, ws, msg, jobId) {
@@ -979,7 +1023,9 @@ function _admin_websocket_functions(send, ws, msg, jobId) {
                 send(ws, {
                     type: "restartServer",
                     id: msg.id,
-                    payload: { success: true }
+                    payload: { 
+                        success: true 
+                    }
                 });
 
                 restart(false);
@@ -992,55 +1038,509 @@ function _admin_websocket_functions(send, ws, msg, jobId) {
                 send(ws, {
                     type: "shutdownServer",
                     id: msg.id,
-                    payload: { success: true }
+                    payload: { 
+                        success: true 
+                    }
                 });
 
                 process.exit(0);
             }
             break;
+        case "checkServerVersion":
+            {
+                // faked here for programming
+                if(msg.payload.test == true){
+                    send(ws, {
+                        type: "checkServerVersion",
+                        id: msg.id,
+                        payload: { 
+                            update: true,
+                            version: "0.0.2",
+                            urls: [
+                                "http://www.google.com"
+                            ]
+                        }
+                    });
+                } else {
+                    send(ws, {
+                        type: "checkServerVersion",
+                        id: msg.id,
+                        payload: { 
+                            update: false,
+                            version: "0.0.1",
+                            urls: []
+                        }
+                    });
+                }
+            }
+            break;
         case "installAsset":
+            {
+                const asset = `${msg.payload.version}_${msg.payload.os}`;
+
+                if (!(asset == "GL_Android" || asset == "GL_iOS" || asset == "JP_Android" || asset == "JP_iOS")
+                ) {
+                    Logger.error(`Input asset is not vaid, "GL_Android", "GL_iOS", "JP_Android" or "JP_iOS" but got: ` + asset);
+
+                    send(ws, {
+                        type: "error",
+                        id: msg.id,
+                        payload: { message: "Unknown asset" }
+                    });
+                } else {
+                    send(ws,{
+                        type: "installAsset",
+                        id: msg.id,
+                        payload:{
+                            jobId: jobId,
+                            status: "Starting asset install.",
+                            progress: 0
+                        }
+                    });
+
+                }
+                // faked here for now
+                let percent = 0;
+
+                const interval = setInterval(() => {
+                    percent += 10;
+
+                    send(ws, {
+                        type: "jobProgress",
+                        id: msg.id,
+                        payload: { 
+                            jobId, 
+                            status: "Processing...", 
+                            progress: percent 
+                        }
+                    });
+
+                    if (percent >= 100) {
+                        clearInterval(interval);
+
+                        send(ws, {
+                            type: "jobComplete",
+                            id: msg.id,
+                            payload: { 
+                                jobId, 
+                                status: "Asset install complete!", 
+                                success: true 
+                            }
+                        });
+                    }
+                }, 500);
+            }
             break;
         case "uninstallAsset":
+            {
+                const asset = `${msg.payload.version}_${msg.payload.os}`;
+
+                if (!(asset == "GL_Android" || asset == "GL_iOS" || asset == "JP_Android" || asset == "JP_iOS")
+                ) {
+                    Logger.error(`Input asset is not vaid, "GL_Android", "GL_iOS", "JP_Android" or "JP_iOS" but got: ` + asset);
+
+                    send(ws, {
+                        type: "error",
+                        id: msg.id,
+                        payload: { message: "Unknown asset" }
+                    });
+                } else {
+                    send(ws,{
+                        type: "uninstallAsset",
+                        id: msg.id,
+                        payload:{
+                            jobId: jobId,
+                            status: "Starting asset uninstall.",
+                            progress: 0
+                        }
+                    });
+                    // faked here for now
+                    let percent = 0;
+
+                    const interval = setInterval(() => {
+                        percent += 10;
+
+                        send(ws, {
+                            type: "jobProgress",
+                            id: msg.id,
+                            payload: { 
+                                jobId, 
+                                status: "Processing...", 
+                                progress: percent 
+                            }
+                        });
+
+                        if (percent >= 100) {
+                            clearInterval(interval);
+
+                            send(ws, {
+                                type: "jobComplete",
+                                id: msg.id,
+                                payload: { 
+                                    jobId, 
+                                    status: "Asset uninstall complete!", 
+                                    success: true 
+                                }
+                            });
+                        }
+                    }, 500);
+                }
+            }
             break;
         case "installPatch":
+            {
+                send(ws,{
+                    type: "installPatch",
+                    id: msg.id,
+                    payload:{
+                        jobId: jobId,
+                        status: "Starting patch install.",
+                        progress: 0
+                    }
+                });
+                // faked here for now
+                let percent = 0;
+
+                const interval = setInterval(() => {
+                    percent += 10;
+
+                    send(ws, {
+                        type: "jobProgress",
+                        id: msg.id,
+                        payload: { 
+                            jobId, 
+                            status: "Processing...", 
+                            progress: percent 
+                        }
+                    });
+
+                    if (percent >= 100) {
+                        clearInterval(interval);
+
+                        send(ws, {
+                            type: "jobComplete",
+                            id: msg.id,
+                            payload: { 
+                                jobId, 
+                                status: "Patch install complete!", 
+                                success: true 
+                            }
+                        });
+                    }
+                }, 500);
+            }
             break;
         case "uninstallPatch":
+            {
+                send(ws,{
+                    type: "uninstallPatch",
+                    id: msg.id,
+                    payload:{
+                        jobId: jobId,
+                        status: "Starting patch uninstall.",
+                        progress: 0
+                    }
+                });
+                // faked here for now
+                let percent = 0;
+
+                const interval = setInterval(() => {
+                    percent += 10;
+
+                    send(ws, {
+                        type: "jobProgress",
+                        id: msg.id,
+                        payload: { 
+                            jobId, 
+                            status: "Processing...", 
+                            progress: percent 
+                        }
+                    });
+
+                    if (percent >= 100) {
+                        clearInterval(interval);
+
+                        send(ws, {
+                            type: "jobComplete",
+                            id: msg.id,
+                            payload: { 
+                                jobId, 
+                                status: "Patch uninstall complete!", 
+                                success: true 
+                            }
+                        });
+                    }
+                }, 500);
+            }
+            break;
+        case "deleteAccount":
+            {
+                send(ws, {
+                    type: "deleteAccount",
+                    id: msg.id,
+                    payload: { 
+                        success: true 
+                    }
+                });
+            }
             break;
         case "getUserAccounts":
+            {
+                const dummy = [
+                    {
+                        id: 1,
+                        uuid: "550e8400-e29b-41d4-a716-446655440000",
+                        player_id: "Player123",
+                        ip_address: "192.168.1.10"
+                    },
+                    {
+                        id: 2,
+                        uuid: "e4d909c2-5f57-4b39-9c2a-1a2b3c4d5e6f",
+                        player_id: "Player456",
+                        ip_address: "192.168.1.11"
+                    },
+                    {
+                        id: 3,
+                        uuid: "e4d90912-5f57-4b59-9c2a-1a2b3c455e6f",
+                        player_id: "Player789",
+                        ip_address: "192.168.1.12"
+                    }
+                ];
+
+                if(msg.payload.uuid){
+                    send(ws, {
+                        type: "getUserAccounts",
+                        id: msg.id,
+                        payload: { 
+                            success: true,
+                            accounts: [dummy[0]]
+                        }
+                    });
+                } else if(msg.payload.player_id){
+                    send(ws, {
+                        type: "getUserAccounts",
+                        id: msg.id,
+                        payload: { 
+                            success: true,
+                            accounts: dummy[2]
+                        }
+                    });
+                } else if(msg.payload.ip_address){
+                    send(ws, {
+                        type: "getUserAccounts",
+                        id: msg.id,
+                        payload: { 
+                            success: true,
+                            accounts: [dummy[1]]
+                        }
+                    });
+                } else {
+                    send(ws, {
+                        type: "getUserAccounts",
+                        id: msg.id,
+                        payload: { 
+                            success: true,
+                            accounts: dummy
+                        }
+                    });
+                }
+            }
             break;
         case "getSecret":
+            {
+                const username = msg.payload.username;
+
+                if(!username){
+                    send(ws, {
+                        type: "error",
+                        id: msg.id,
+                        payload: { 
+                            message: "error"
+                        }
+                    });
+                } else {
+                    send(ws, {
+                        type: "getSecret",
+                        id: msg.id,
+                        payload: { 
+                            success: true,
+                            secret: "12568asd1aqsd"
+                        }
+                    });
+                }
+            }
             break;
         case "switchDevice":
+            {
+                if(msg.payload.uuid == undefined || msg.payload.player_id == undefined){
+                    send(ws, {
+                        type: "error",
+                        id: msg.id,
+                        payload: { 
+                            message: "Couldn't find account"
+                        }
+                    });
+                } else {
+                    send(ws, {
+                        type: "switchDevice",
+                        id: msg.id,
+                        payload: { 
+                            success: true
+                        }
+                    });
+                }
+            }
             break;
         case "timeRequest":
-            send(ws, {
-                type: "timeRequest",
-                id: msg.id,
-                payload: { time: humanReadable() }
-            });
+            {
+                send(ws, {
+                    type: "timeRequest",
+                    id: msg.id,
+                    payload: { 
+                        time: humanReadable() 
+                    }
+                });
+            }
+            break;
+        case "displayURLs":
+            {
+                send(ws, {
+                    type: "displayURLs",
+                    id: msg.id,
+                    payload: { 
+                        success: true 
+                    }
+                });
+            }
+            break;
+        case "getPatches":
+            {
+                send(ws, {
+                    type: "getPatches",
+                    id: msg.id,
+                    payload: [
+                        {
+                        "name": "Default_GL_Patch",
+                        "file": "Default_GL_Patch.zip",
+                        "patch_version": "0.0.1",
+                        "game_version": "GL",
+                        "min_server_version": "0.0.1",
+                        "desc": "Required patch to play the GL version of the game.",
+                        "requires": [],
+                        "conflicts": [],
+                        "mega": "1yIGyB4J#rO6G16179UuLTJiHhdwdcUOBsCxY52J4CfWfJ75XpQ4",
+                        "google": "1XeJ1uf5feK6Gxi4YqndHSoXgIvffpIIV",
+                        "hash": "866b8e1ffa1ca61f3005e565c5562fd572329745a63643c4928d47fde1e5c1bc"
+                        },
+                        {
+                        "name": "dummy_patch",
+                        "file": "dummy_patch.zip",
+                        "patch_version": "0.0.1",
+                        "game_version": "GL",
+                        "min_server_version": "0.0.1",
+                        "desc": "Not a real patch.",
+                        "requires": [
+                            {
+                                "name": "Default_GL_Patch",
+                                "patch_version": "0.0.1"
+                            }
+                        ],
+                        "conflicts": [],
+                        "mega": "1yIGyB4J#rO6G16179UuLTJiHhdwdcUOBsCxY52J4CfWfJ75XpQ4",
+                        "google": "1XeJ1uf5feK6Gxi4YqndHSoXgIvffpIIV",
+                        "hash": "866b8e1ffa1ca61f3005e565c5562fd572329745a63643c4928d47fde1e5c1bc"
+                        },
+                        {
+                        "name": "dummy_patch2",
+                        "file": "dummy_patch2.zip",
+                        "patch_version": "0.0.1",
+                        "game_version": "GL",
+                        "min_server_version": "0.0.1",
+                        "desc": "Not a real patch 2.",
+                        "requires": [],
+                        "conflicts": [
+                            {
+                                "name": "dummy_patch",
+                                "patch_version": "0.0.1"
+                            }
+                        ],
+                        "mega": "1yIGyB4J#rO6G16179UuLTJiHhdwdcUOBsCxY52J4CfWfJ75XpQ4",
+                        "google": "1XeJ1uf5feK6Gxi4YqndHSoXgIvffpIIV",
+                        "hash": "866b8e1ffa1ca61f3005e565c5562fd572329745a63643c4928d47fde1e5c1bc"
+                        }
+                    ]
+                });
+                
+            }
+            break;
+        case "getServerDB":
+            {
+                send(ws, {
+                    type: "getServerDB",
+                    id: msg.id,
+                    payload: {
+                        "ins_id": 100000000,
+                        "uid": 1000000,
+                        "player_id": 100000002,
+                        "assets": {
+                            "GL": {
+                                "iOS": "839e68579466558d31917fdfd4154524114623b6b23df15b310274a741075522",
+                                "Android": "ce8546797ce3769afccfa21d96d8871f86eb5006101965ac8985c83c331c4c17"
+                            },
+                            "JP": {
+                                "Android": "c800cf2effe770887ef0f41e1d1bbf34dff2e74774d77f1d1bf11a4862866d19",
+                                "iOS": "0fd0761ab659ee763ca6b6911d738cf2f8c0e699c1137b1068a1b414d11bfc3a"
+                            }
+                        },
+                        "patches": [
+                            {
+                                "name": "Default_GL_Patch",
+                                "patch_version": "0.0.1",
+                                "game_version": "GL",
+                                "requires": [],
+                                "conflicts": [],
+                                "hash": "866b8e1ffa1ca61f3005e565c5562fd572329745a63643c4928d47fde1e5c1bc"
+                            }
+                        ]
+                    }
+                });
+            }
             break;
         case "getEnvValues":
             {
                 send(ws, {
                     type: "getEnvValues",
                     id: msg.id,
-                    payload: ENV_VALUES
+                    payload: CURRENT_CONST_VALUES.CURRENT_ENV_VALUES
+                });
+            }
+            break;
+        case "getConstValues":
+            {
+                send(ws, {
+                    type: "getEnvValues",
+                    id: msg.id,
+                    payload: CURRENT_CONST_VALUES
                 });
             }
             break;
         case "setEnvValue":
             {
-                const values = ENV_VALUES;
-
+                const values = CURRENT_CONST_VALUES.CURRENT_ENV_VALUES;
+                
                 if ((msg.payload && msg.payload.key == undefined) ||
                     (msg.payload && msg.payload.value == undefined) ||
+                    // @ts-ignore
                     values[msg.payload.key] == undefined ||
+                    // @ts-ignore
                     (typeof values[msg.payload.key] != typeof msg.payload.value)
                 ) {
                     send(ws, {
                         type: "error",
                         id: msg.id,
-                        payload: { message: "Key Error." }
+                        payload: { 
+                            message: "Key Error." 
+                        }
                     });
                 } else {
                     const success = updateEnvVariable({ key: msg.payload.key, value: `${msg.payload.value}` });
@@ -1057,14 +1557,14 @@ function _admin_websocket_functions(send, ws, msg, jobId) {
             break;
         case "startProcess":
             {
-                // faked here for now
-                let percent = 0;
-
                 send(ws, {
                     type: "startProcess",
                     id: msg.id,
-                    payload: { jobId, status: "Starting...", progress: percent }
+                    payload: { jobId, status: "Starting...", progress: 0 }
                 });
+
+                // faked here for now
+                let percent = 0;
 
                 const interval = setInterval(() => {
                     percent += 10;
@@ -1072,7 +1572,11 @@ function _admin_websocket_functions(send, ws, msg, jobId) {
                     send(ws, {
                         type: "jobProgress",
                         id: msg.id,
-                        payload: { jobId, status: "Processing...", progress: percent }
+                        payload: { 
+                            jobId, 
+                            status: "Processing...", 
+                            progress: percent 
+                        }
                     });
 
                     if (percent >= 100) {
@@ -1081,7 +1585,11 @@ function _admin_websocket_functions(send, ws, msg, jobId) {
                         send(ws, {
                             type: "jobComplete",
                             id: msg.id,
-                            payload: { jobId, status: "File processed successfully", progress: percent }
+                            payload: { 
+                                jobId, 
+                                status: "File processed successfully", 
+                                success: true 
+                            }
                         });
                     }
                 }, 500);

@@ -4,7 +4,11 @@
 // "downloadLog"    // request & response
 // "error"          // response only
 // "timeRequest"    // request & response
+// "getPatches"     // request & response
+// "getServerDB"    // request & response
+// "displayURLs"    // request & response
 // "getEnvValues"   // request & response
+// "getConstValues" // request & response
 // "setEnvValue"    // request & response
 // "startProcess"   // request & response
 // "test"           // request & response
@@ -16,6 +20,7 @@
 // "uninstallAsset" // response only with jobId
 // "installPatch"   // response only with jobId
 // "uninstallPatch" // response only with jobId
+// "deleteAccount"  // request & response
 // "getUserAccounts"// request & response
 // "getSecret"      // request & response
 // "switchDevice"   // request & response
@@ -28,10 +33,14 @@ type id = number;
 /**
  * Single response type
  */
-type typeMsgRequests =
+export type typeMsgRequests =
     | "downloadLog"
     | "timeRequest"
+    | "getPatches"
+    | "getServerDB"
+    | "displayURLs"
     | "getEnvValues"
+    | "getConstValues"
     | "setEnvValue"
     | "startProcess"  // w/ jobId
     | "test"
@@ -41,8 +50,10 @@ type typeMsgRequests =
     | "uninstallAsset"// w/ jobId
     | "installPatch"  // w/ jobId
     | "uninstallPatch"// w/ jobId
+    | "deleteAccount"
     | "getUserAccounts"
     | "getSecret"
+    | "checkServerVersion"
     | "switchDevice";
 
 /**
@@ -50,14 +61,14 @@ type typeMsgRequests =
  * 
  * Jobs use `jobId` to track
  */
-type typeMsgSubscribe =
+export type typeMsgSubscribe =
     | "log"
     | "jobProgress"
     | "jobComplete";
 
-interface RequestMap {
+export interface RequestMap {
     /**
-     * response only
+     * response only {@link typeMsgSubscribe}
      */
     log: {
         request: {
@@ -70,8 +81,8 @@ interface RequestMap {
             id: id,
             payload: {
                 /**
-             * Log message as text
-             */
+                 * Log message as text
+                 */
                 text: string,
                 /**
                  * Log message as html
@@ -80,6 +91,9 @@ interface RequestMap {
             };
         }
     },
+    /**
+     * Downloads the current log file from the server
+     */
     downloadLog: {
         request: {
             type: "downloadLog",
@@ -125,6 +139,9 @@ interface RequestMap {
             }
         }
     },
+    /**
+     * Test function for general ping
+     */
     timeRequest: {
         request: {
             type: "timeRequest",
@@ -142,6 +159,260 @@ interface RequestMap {
             }
         }
     },
+    /**
+     * gets the current constants that the server is working with
+     */
+    getConstValues:{
+        request: {
+            type: "getConstValues",
+            id: id,
+            payload: any
+        },
+        response: {
+            type: "getConstValues",
+            id: id,
+            payload: {
+                /**
+                 * start up arguments
+                 */
+                ARGV: {[key: string]: any};
+                /**
+                 * root process directory
+                 */
+                DIR_NAME: string;
+                /**
+                 * file path to .env file
+                 */
+                ENV_FILE_PATH: string;
+                /**
+                 * key and values to current .env file
+                 * 
+                 * Can be changed with {@link RequestMap.setEnvValue}
+                 */
+                CURRENT_ENV_VALUES: {
+                    /**
+                     * Time your server backs up the DB in minutes
+                     */
+                    BACKUP: number;
+                    /**
+                     * Version of the game the server is running
+                     */
+                    VER: "GL"|"JP";
+                    /**
+                     * IP Address of the server
+                     */
+                    IP_ADDRESS: string;
+                    /**
+                     * Port the server is runnning on (not admin panel)
+                     */
+                    PORT: string;
+                    /**
+                     * For using https instead of http (advanced stuff)
+                     */
+                    USE_HTTPS: boolean;
+                    /**
+                     * if the admin panel is active
+                     */
+                    ADMIN_PANEL: boolean;
+                    /**
+                     * Admin panel port
+                     */
+                    ADMIN_PORT: string;
+                    /**
+                     * Admin panel username
+                     */
+                    ADMIN_USERNAME: string;
+                    /**
+                     * Admin panel password
+                     */
+                    ADMIN_PASSWORD: string;
+                    /**
+                     * Level the log file writes at
+                     */
+                    LOG_LEVEL: "debug"| "warn" | "error" | "info";
+                };
+                /**
+                 * array values for creating .env file and values when error
+                 */
+                DEFAULT_ENV_VALUES: {
+                    desc: string;
+                    key: string;
+                    value: string;
+                }[];
+                /**
+                 * Time your server backs up the DB in minutes
+                 */
+                BACKUP: number;
+                /**
+                 * file path to server.json
+                 */
+                SERVER_DB_PATH: string;
+                /**
+                 * file path to users.db
+                 */
+                USERS_DB_PATH: string;
+                /**
+                 * Server software version number
+                 */
+                SERVER_VERSION: string;
+                /**
+                 * For using https instead of http (advanced stuff)
+                 */
+                USE_HTTPS: boolean;
+                /**
+                 * Level the log file writes at
+                 */
+                LOG_LEVEL: "debug"| "warn" | "error" | "info";
+                /**
+                 * Version of the game the server is running
+                 */
+                VER: "GL" | "JP";
+                /**
+                 * IP Address of the server
+                 */
+                IP_ADDRESS: string;
+                /**
+                 * Port the server is runnning on (not admin panel)
+                 */
+                PORT: string;
+                /**
+                 * full url of the server
+                 */
+                SERVER_URL: string;
+                /**
+                 * Expected client master data version
+                 */
+                CLIENT_MVER: number;
+                /**
+                 * Client software version (will never change)
+                 */
+                CLIENT_VER: {
+                    GL: number;
+                    JP: number;
+                };
+                /**
+                 * if the admin panel is active
+                 */
+                ADMIN_PANEL: boolean;
+                /**
+                 * Admin panel port
+                 */
+                ADMIN_PORT: string,
+                /**
+                 * Admin panel username
+                 */
+                ADMIN_USERNAME: string,
+                /**
+                 * Admin panel password
+                 */
+                ADMIN_PASSWORD: string,
+                /**
+                 * Machine architecture like `x64` or `arm64`
+                 */
+                MACHINE_ARCH: string,
+                /**
+                 * Machine operating system
+                 */
+                MACHINE_OS: string
+            }
+        }
+    },
+    /**
+     * Displays in the log where you can manually download the asset or patch data with instructions 
+     */
+    displayURLs:{
+        request:{
+            type: "displayURLs",
+            id: id,
+            payload: any
+        },
+        response: {
+            type: "displayURLs",
+            id: id,
+            payload: {
+                success: boolean
+            }
+        }
+    },
+    /**
+     * Gets the currently available patch list to check against the current installed patches 
+     */
+    getPatches:{
+        request:{
+            type: "getPatches",
+            id: id,
+            payload: any
+        },
+        response:{
+            type: "getPatches",
+            id: id,
+            payload: {
+                name: string;
+                file: string;
+                patch_version: string;
+                game_version: "GL" | "JP";
+                min_server_version: string;
+                desc: string;
+                requires: {
+                    name: string;
+                    patch_version: string;
+                }[];
+                conflicts: {
+                    name: string;
+                    patch_version: string;
+                }[];
+                mega: string;
+                google: string;
+                hash: string;
+            }[]
+        }
+    }
+    /**
+     * current server running config, including the assets packages and patches installed
+     */
+    getServerDB:{
+        request:{
+            type: "getServerDB",
+            id: id,
+            payload: any
+        },
+        response:{
+            type: "getServerDB",
+            id: id,
+            payload: {
+                ins_id: number;
+                uid: number;
+                player_id: number;
+                assets: {
+                    GL: {
+                        Android?: string | undefined;
+                        iOS?: string | undefined;
+                    };
+                    JP: {
+                        Android?: string | undefined;
+                        iOS?: string | undefined;
+                    };
+                };
+                patches: {
+                    name: string;
+                    patch_version: string;
+                    game_version: "GL" | "JP";
+                    requires: {
+                        name: string;
+                        patch_version: string;
+                    }[];
+                    conflicts: {
+                        name: string;
+                        patch_version: string;
+                    }[];
+                    hash: string;
+                }[];
+            }
+        }
+    }
+    /**
+     * Editable values for setting the .env file
+     */
     getEnvValues: {
         request: {
             type: "getEnvValues",
@@ -153,12 +424,51 @@ interface RequestMap {
             id: id,
             payload: {
                 /**
-                 * Server env key and value set
+                 * Time your server backs up the DB in minutes
                  */
-                [key: string]: any
+                BACKUP: number;
+                /**
+                 * Version of the game the server is running
+                 */
+                VER: "GL"|"JP";
+                /**
+                 * IP Address of the server
+                 */
+                IP_ADDRESS: string;
+                /**
+                 * Port the server is runnning on (not admin panel)
+                 */
+                PORT: string;
+                /**
+                 * For using https instead of http (advanced stuff)
+                 */
+                USE_HTTPS: boolean;
+                /**
+                 * if the admin panel is active
+                 */
+                ADMIN_PANEL: boolean;
+                /**
+                 * Admin panel port
+                 */
+                ADMIN_PORT: string;
+                /**
+                 * Admin panel username
+                 */
+                ADMIN_USERNAME: string;
+                /**
+                 * Admin panel password
+                 */
+                ADMIN_PASSWORD: string;
+                /**
+                 * Level the log file writes at
+                 */
+                LOG_LEVEL: "debug"| "warn" | "error" | "info";
             }
         }
     }
+    /**
+     * update {@link RequestMap.getEnvValues}
+     */
     setEnvValue: {
         request: {
             type: "setEnvValue",
@@ -185,6 +495,9 @@ interface RequestMap {
             }
         }
     },
+    /**
+     * test function
+     */
     startProcess: {
         request: {
             type: "startProcess",
@@ -210,6 +523,9 @@ interface RequestMap {
             }
         }
     },
+    /**
+     * test function
+     */
     test: {
         request: {
             type: "test",
@@ -225,7 +541,26 @@ interface RequestMap {
         }
     },
     /**
-     * response only
+     * Gets the current server software version and checks if there is an update
+     */
+    checkServerVersion: {
+        request: {
+            type: "checkServerVersion",
+            id: id,
+            payload: any
+        },
+        response: {
+            type: "checkServerVersion",
+            id: id,
+            payload: {
+                update: boolean,
+                version: string,
+                urls: string[]
+            }
+        }
+    },
+    /**
+     * response only {@link typeMsgSubscribe}
      */
     jobProgress: {
         request: {
@@ -253,7 +588,7 @@ interface RequestMap {
         }
     },
     /**
-     * response only
+     * response only {@link typeMsgSubscribe}
      */
     jobComplete: {
         request: {
@@ -276,10 +611,13 @@ interface RequestMap {
                 /**
                  * % of 100
                  */
-                progress: number
+                success: boolean
             }
         }
     },
+    /**
+     * restarts the server instance (not a full restart)
+     */
     restartServer: {
         request: {
             type: "restartServer",
@@ -297,6 +635,9 @@ interface RequestMap {
             }
         }
     },
+    /**
+     * kill the process
+     */
     shutdownServer: {
         request: {
             type: "shutdownServer",
@@ -314,6 +655,11 @@ interface RequestMap {
             }
         }
     },
+    /**
+     * Installs an asset package
+     * 
+     * Gets updates with jobId
+     */
     installAsset: {
         request: {
             type: "installAsset",
@@ -326,7 +672,11 @@ interface RequestMap {
                 /**
                  * Device version
                  */
-                os: "Andorid" | "iOs"
+                os: "Android" | "iOS",
+                /**
+                 * delete zip after downloading
+                 */
+                deleteAfter : boolean
             }
         },
         response: {
@@ -348,6 +698,11 @@ interface RequestMap {
             }
         }
     },
+    /**
+     * Uninstalls an asset package
+     * 
+     * Gets updates with jobId
+     */
     uninstallAsset: {
         request: {
             type: "uninstallAsset",
@@ -360,7 +715,7 @@ interface RequestMap {
                 /**
                  * Device version
                  */
-                os: "Andorid" | "iOs"
+                os: "Android" | "iOS"
             }
         },
         response: {
@@ -382,6 +737,11 @@ interface RequestMap {
             }
         }
     },
+    /**
+     * Installs a patch
+     * 
+     * Gets updates with jobId
+     */
     installPatch: {
         request: {
             type: "installPatch",
@@ -392,9 +752,9 @@ interface RequestMap {
                  */
                 patch: string,
                 /**
-                 * Patch version number
+                 * delete zip after downloading
                  */
-                version: "Andorid" | "iOs"
+                deleteAfter : boolean
             }
         },
         response: {
@@ -416,6 +776,11 @@ interface RequestMap {
             }
         }
     },
+    /**
+     * Uninstalls a patch
+     * 
+     * Gets updates with jobId
+     */
     uninstallPatch: {
         request: {
             type: "uninstallPatch",
@@ -424,11 +789,7 @@ interface RequestMap {
                 /**
                  * Patch name
                  */
-                patch: string,
-                /**
-                 * Patch version number
-                 */
-                version: "Andorid" | "iOs"
+                patch: string
             }
         },
         response: {
@@ -450,15 +811,38 @@ interface RequestMap {
             }
         }
     },
+    /**
+     * Deletes a player account from the db. Also removes folder of all data
+     */
+    deleteAccount:{
+        request: {
+            type: "deleteAccount",
+            id: id,
+            payload: {
+                id: number
+            }
+        },
+        response: {
+            type: "deleteAccount",
+            id: id,
+            payload: {
+                success: boolean
+            }
+        }
+    },
+    /**
+     * Gets all accounts if a value isn't set 
+     * 
+     * Only set one uuid, player_id or ip_address
+     */
     getUserAccounts: {
         request: {
             type: "getUserAccounts",
             id: id,
             payload: {
-                /**
-                 * Request a single account or get all.
-                 */
-                account?: string
+                uuid?: string;
+                player_id?: string;
+                ip_address?: string;
             }
         },
         response: {
@@ -472,11 +856,18 @@ interface RequestMap {
                 /**
                  * Return only. TDB account infos
                  */
-                accounts: any[]
+                accounts: {
+                    id: number;
+                    uuid: string;
+                    player_id: string;
+                    ip_address: string;
+                }[]
             }
         }
-
     },
+    /**
+     * Gets the user account (bridge replacement login software) password reset secret
+     */
     getSecret: {
         request: {
             type: "getSecret",
@@ -503,6 +894,9 @@ interface RequestMap {
             }
         }
     },
+    /**
+     * switches a player_id attached to a uuid
+     */
     switchDevice: {
         request: {
             type: "switchDevice",
@@ -534,7 +928,7 @@ interface RequestMap {
 /**
  * Basic message types
  */
-type RequestType = keyof RequestMap;
+export type RequestType = keyof RequestMap;
 
 /**
  * Creates connection to server. Must be at start of `useEffect` in any componets. 

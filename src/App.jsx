@@ -76,7 +76,7 @@ export default function App() {
 
                                 <Route path="/" exact element={
                                     <Home 
-                                        setNeedsRestart={setNeedsRestart} 
+                                        setNeedsRestart={setNeedsRestart}
                                     />
                                 } />
 
