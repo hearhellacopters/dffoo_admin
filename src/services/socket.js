@@ -63,11 +63,16 @@ function scheduleReconnect() {
 
 function connect() {
     if (socket &&
-       (socket.readyState === WebSocket.OPEN ||
-        socket.readyState === WebSocket.CONNECTING)
+       (socket.readyState === WebSocket.OPEN)
     ){
-        return;
+        return true;
     };
+
+    if (socket &&
+       (socket.readyState === WebSocket.CONNECTING)
+    ){
+        return false;
+    }
 
     setState("Connecting...");
 
@@ -134,6 +139,12 @@ function connect() {
 
         return;
     });
+
+    if(connectionState == "Connected"){
+        return true;
+    } else {
+        return false;
+    }
 };
 
 /**
@@ -148,7 +159,7 @@ function connect() {
  * ```
  */
 export function startSocket() {
-    connect();
+    return connect();
 }
 
 /**
@@ -222,7 +233,7 @@ export function subscribeConnectionState(handler) {
  * @param {RequestMap[T]["request"]["payload"]} payload Sending data
  * @returns {Promise<RequestMap[T | "error"]["response"]>} return data
  */
-export function request(type, payload) {
+export async function request(type, payload = {}) {
     return new Promise((resolve) => {
         const id = requestId++;
 

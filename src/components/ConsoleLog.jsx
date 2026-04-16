@@ -3,16 +3,18 @@ import ConnectionStatus from "./ConnectionStatus";
 import { FaCopy } from "react-icons/fa";
 import { FaEraser } from "react-icons/fa";
 import { FaDownload } from "react-icons/fa";
-import { startSocket, subscribe, subscribeConnectionState, request } from "../services/socket";
+import { FaWindowMinimize } from "react-icons/fa";
+import { FaWindowMaximize } from "react-icons/fa";
+import { subscribe, subscribeConnectionState, request } from "../services/socket";
 import '../css/ConsoleLog.css';
 
 /**
  * Server Console Log Window
  * 
- * @param {{isMobile: boolean}} param0 
+ * @param {{isMobile: boolean, isMinimize:boolean, setIsMinimize: ()=>{}}} param0 
  * @returns 
  */
-export default function ConsoleLog({ isMobile }) {
+export default function ConsoleLog({ isMobile, isMinimize, setIsMinimize }) {
     const [htmlLogs, setHtmlLogs] = useState([]);
 
     const [textLogs, setTextLogs] = useState([]);
@@ -22,9 +24,7 @@ export default function ConsoleLog({ isMobile }) {
     const idRef = useRef(0);
 
     useEffect(() => {
-        startSocket();
-
-        subscribe("log", (data) => {
+        const subLog = subscribe("log", (data) => {
             if (textLogs.length < 2000) {
                 setTextLogs((prev) => [...prev, data.payload.text]);
             }
@@ -40,8 +40,16 @@ export default function ConsoleLog({ isMobile }) {
             }
         });
 
-        return subscribeConnectionState(setConnectedState);
+        return () => {
+            if (connectedState == "Connected") {
+                subLog();
+            }
+        };
     }, []);
+
+    useEffect(() => {
+        return subscribeConnectionState(setConnectedState);
+    }, [])
 
     const containerRef = useRef(null);
 
@@ -144,7 +152,7 @@ export default function ConsoleLog({ isMobile }) {
     }
 
     return (
-        <div className="log-wraper" style={isMobile ? { fontSize: "8px" } : {}}>
+        <div className="log-wraper" style={isMobile ? { fontSize: "8px", marginBottom: isMinimize ? "" : "1rem" } : { marginLeft: "13.5rem", marginBottom: isMinimize ? "" : "1rem" }}>
             <h2 className="log-header">
                 <span style={{ marginLeft: "3px" }}>
                     <sup>
@@ -155,22 +163,41 @@ export default function ConsoleLog({ isMobile }) {
                     {isMobile ? "" : connectedState != "Connected" ? ` - ${connectedState}` : ""}
                 </span>
                 <span className="log-icon-holder">
-                    <FaDownload title="Download Current Server Log File" className="clicky svgIcon" onClick={downloadLog} />
-                    <span>{" "}</span>
-                    <FaCopy title="Copy Log" className="clicky svgIcon" onClick={copyToClipboard} />
-                    <span>{" "}</span>
-                    <FaEraser title="Clear Log" className="clicky svgIcon" onClick={clearLogs} />
+                    {isMinimize == true ? "" :
+                        <>
+                            <FaDownload title="Download Current Server Log File" className="clicky svgIcon" onClick={downloadLog} />&nbsp;
+                            <FaCopy title="Copy Log" className="clicky svgIcon" onClick={copyToClipboard} />&nbsp;
+                            <FaEraser title="Clear Log" className="clicky svgIcon" onClick={clearLogs} />&nbsp;
+                        </>
+                    }
+                    {isMinimize ?
+                        <FaWindowMaximize
+                            title={"Maximize Log"}
+                            className="clicky svgIcon"
+                            onClick={() => setIsMinimize((preValue) => !preValue)}
+                        />
+                        :
+                        <FaWindowMinimize
+                            title={"Minimize Log"}
+                            className="clicky svgIcon"
+                            onClick={() => setIsMinimize((preValue) => !preValue)}
+                        />
+                    }
                 </span>
             </h2>
-            <div className="log-container" ref={containerRef}>
-                {htmlLogs.map((log) => (
-                    <div
-                        key={log.id}
-                        className="log-line"
-                        dangerouslySetInnerHTML={{ __html: log.html }}
-                    />
-                ))}
-                <div ref={messagesEndRef} />
+            <div className={isMinimize ? "log-container-hide" : "log-container"} ref={containerRef}>
+                {isMinimize ? "" :
+                    <>
+                        {htmlLogs.map((log) => (
+                            <div
+                                key={log.id}
+                                className="log-line"
+                                dangerouslySetInnerHTML={{ __html: log.html }}
+                            />
+                        ))}
+                        <div ref={messagesEndRef} />
+                    </>
+                }
             </div>
         </div>
     );

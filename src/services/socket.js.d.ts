@@ -1,30 +1,5 @@
 // @ts-check
 
-// "log"            // subscribe only
-// "downloadLog"    // request & response
-// "error"          // response only
-// "timeRequest"    // request & response
-// "getPatches"     // request & response
-// "getServerDB"    // request & response
-// "displayURLs"    // request & response
-// "getEnvValues"   // request & response
-// "getConstValues" // request & response
-// "setEnvValue"    // request & response
-// "startProcess"   // request & response
-// "test"           // request & response
-// "jobProgress"    // subscribe by jobId only
-// "jobComplete"    // subscribe by jobId only
-// "restartServer"  // request & response
-// "shutdownServer" // request & response
-// "installAsset"   // response only with jobId
-// "uninstallAsset" // response only with jobId
-// "installPatch"   // response only with jobId
-// "uninstallPatch" // response only with jobId
-// "deleteAccount"  // request & response
-// "getUserAccounts"// request & response
-// "getSecret"      // request & response
-// "switchDevice"   // request & response
-
 /**
  * Increasing unique number for tracking requests and returns
  */
@@ -35,26 +10,29 @@ type id = number;
  */
 export type typeMsgRequests =
     | "downloadLog"
+    | "error"
     | "timeRequest"
     | "getPatches"
     | "getServerDB"
     | "displayURLs"
     | "getEnvValues"
     | "getConstValues"
-    | "setEnvValue"
-    | "startProcess"  // w/ jobId
+    | "setEnvValues"
+    | "startProcess"
     | "test"
     | "restartServer"
     | "shutdownServer"
-    | "installAsset"  // w/ jobId
-    | "uninstallAsset"// w/ jobId
-    | "installPatch"  // w/ jobId
-    | "uninstallPatch"// w/ jobId
-    | "deleteAccount"
-    | "getUserAccounts"
+    | "installAsset"  
+    | "uninstallAsset"
+    | "installPatch"  
+    | "uninstallPatch"
+    | "deletePlayerAccount"
+    | "deletePlayerID"
+    | "getPlayerAccounts"
     | "getSecret"
     | "checkServerVersion"
-    | "switchDevice";
+    | "switchDevice"
+    | "purgeLogs";
 
 /**
  * Message type to subscribe (has more than 1 response) 
@@ -187,7 +165,7 @@ export interface RequestMap {
                 /**
                  * key and values to current .env file
                  * 
-                 * Can be changed with {@link RequestMap.setEnvValue}
+                 * Can be changed with {@link RequestMap.setEnvValues}
                  */
                 CURRENT_ENV_VALUES: {
                     /**
@@ -251,6 +229,10 @@ export interface RequestMap {
                  * file path to users.db
                  */
                 USERS_DB_PATH: string;
+                /**
+                 * If the game data has an active rebalance
+                 */
+                REBALANCE: boolean;
                 /**
                  * Server software version number
                  */
@@ -330,7 +312,12 @@ export interface RequestMap {
             type: "displayURLs",
             id: id,
             payload: {
-                success: boolean
+                success: boolean,
+                data: {
+                    string: boolean, 
+                    link: boolean, 
+                    text: string 
+                }[]
             }
         }
     },
@@ -366,7 +353,7 @@ export interface RequestMap {
                 hash: string;
             }[]
         }
-    }
+    },
     /**
      * current server running config, including the assets packages and patches installed
      */
@@ -383,6 +370,7 @@ export interface RequestMap {
                 ins_id: number;
                 uid: number;
                 player_id: number;
+                player_accounts: number,
                 assets: {
                     GL: {
                         Android?: string | undefined;
@@ -409,7 +397,7 @@ export interface RequestMap {
                 }[];
             }
         }
-    }
+    },
     /**
      * Editable values for setting the .env file
      */
@@ -465,27 +453,23 @@ export interface RequestMap {
                 LOG_LEVEL: "debug"| "warn" | "error" | "info";
             }
         }
-    }
+    },
     /**
      * update {@link RequestMap.getEnvValues}
      */
-    setEnvValue: {
+    setEnvValues: {
         request: {
-            type: "setEnvValue",
+            type: "setEnvValues",
             id: id,
             payload: {
                 /**
-                 * Key to set
+                 * Values from {@link RequestMap.getEnvValues}
                  */
-                key: string,
-                /**
-                 * value to set the key
-                 */
-                value: any
+                [key:string]: string
             }
         },
         response: {
-            type: "setEnvValue",
+            type: "setEnvValues",
             id: id,
             payload: {
                 /**
@@ -577,6 +561,10 @@ export interface RequestMap {
                  */
                 jobId: number,
                 /**
+                 * Title of task
+                 */
+                task: string,
+                /**
                  * Current step in process
                  */
                 status: string,
@@ -604,6 +592,10 @@ export interface RequestMap {
                  * Job reference for subscribe
                  */
                 jobId: number,
+                /**
+                 * Title of task
+                 */
+                task: string,
                 /**
                  * Current step in process
                  */
@@ -812,18 +804,41 @@ export interface RequestMap {
         }
     },
     /**
-     * Deletes a player account from the db. Also removes folder of all data
+     * Deletes a player account link to the device from the db.
+     * 
+     * Doesn't delete player_id data
      */
-    deleteAccount:{
+    deletePlayerAccount:{
         request: {
-            type: "deleteAccount",
+            type: "deletePlayerAccount",
             id: id,
             payload: {
                 id: number
             }
         },
         response: {
-            type: "deleteAccount",
+            type: "deletePlayerAccount",
+            id: id,
+            payload: {
+                success: boolean
+            }
+        }
+    },
+    /**
+     * Deletes a player_id from the db. Deletes player_id data as well
+     * 
+     * Replaces any user accounts with player_id with a new one
+     */
+    deletePlayerID:{
+        request: {
+            type: "deletePlayerID",
+            id: id,
+            payload: {
+                id: number
+            }
+        },
+        response: {
+            type: "deletePlayerID",
             id: id,
             payload: {
                 success: boolean
@@ -835,9 +850,9 @@ export interface RequestMap {
      * 
      * Only set one uuid, player_id or ip_address
      */
-    getUserAccounts: {
+    getPlayerAccounts: {
         request: {
-            type: "getUserAccounts",
+            type: "getPlayerAccounts",
             id: id,
             payload: {
                 uuid?: string;
@@ -846,7 +861,7 @@ export interface RequestMap {
             }
         },
         response: {
-            type: "getUserAccounts",
+            type: "getPlayerAccounts",
             id: id,
             payload: {
                 /**
@@ -861,6 +876,9 @@ export interface RequestMap {
                     uuid: string;
                     player_id: string;
                     ip_address: string;
+                    rebalance: boolean;
+                    version: "GL" | "JP";
+                    create_at: string
                 }[]
             }
         }
@@ -922,69 +940,27 @@ export interface RequestMap {
                 success: boolean
             }
         }
+    },
+    /**
+     * Deletes non-active log files
+     */
+    purgeLogs:{
+        request: {
+            type: "purgeLogs",
+            id: id,
+            payload: any
+        },
+        response: {
+            type: "purgeLogs",
+            id: id,
+            payload: {
+                success: boolean
+            }
+        }
     }
-};
+}
 
 /**
  * Basic message types
  */
 export type RequestType = keyof RequestMap;
-
-/**
- * Creates connection to server. Must be at start of `useEffect` in any componets. 
- * 
- * @example
- * ```js
- * useEffect(() => {
- *      startSocket();
- *      // Code for requests or subscribes here
- *  }, []);
- * ```
- */
-function startSocket(): void;
-
-/**
- * Get all messages of a type
- * 
- * @example
- * ```js
- * useEffect(() => {
- *      connect();
- *      
- *      const unsub = subscribe("log", (data) => {
- *          setTextLogs((prev) => [...prev, data.payload.text]);
- * 
- *          setLogs((prev) => [
- *              ...prev,
- *              {
- *                  id: idRef.current++,
- *                  html: data.payload.html,
- *              },
- *          ]);
- *      });
- * 
- *      return unsub;
- *  }, []);
- * ```
- */
-function subscribe<T = typeMsgSubscribe>(type: subscribe, handler: (data: RequestMap[T]["response"]) => void): () => void;
-
-/**
- * Gets connected state
- */
-function subscribeConnectionState(handler: (data: "Disconnected" | "Connecting..." | "Connected") => void): () => boolean;
-
-/**
- * Make a single request / response to the server.
- * 
- * @async
- * @example
- * ```js
- *  async function getTime() {
- *     const res = await request("timeRequest");
- * 
- *     console.log(res);
- * };
- * ```
- */
-async function request<T = typeMsgRequests>(type: T, payload: RequestMap[T | "error"]["request"]["payload"]): Promise<RequestMap[T]["response"]>

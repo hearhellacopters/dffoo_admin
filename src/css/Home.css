@@ -1,0 +1,56 @@
+.home-table {
+    margin: 10px;
+    border: 2px solid #efefef;
+    border-spacing: 0;
+    table-layout: fixed;
+    width: 21rem;
+}
+
+.home-border-bottom{
+    border-bottom: 2px solid #efefef;
+}
+
+.home-table-header{
+    background-color: #2a2a2a;
+}
+
+.home-gl-bg{
+    background-color: #243a4d;
+}
+
+.home-jp-bg{
+   background-color: #4d2424;
+}
+
+.home-patches-bg{
+    background-color: #244d47;
+}
+
+.home-accounts-bg{
+    background-color: #454d24;
+}
+
+.home-border-top{
+    border-top: 2px solid #efefef;
+}
+
+.home-border-left{
+    border-left: 1px solid #efefef;
+}
+
+.home-border-right{
+    border-right: 1px solid #efefef;
+}
+
+.home-subborder-left{
+    border-left: 1px solid #595959;
+}
+
+.home-subborder-right{
+    border-right: 1px solid #595959;
+}
+
+.home-th {
+    padding: 10px;
+    text-align: center;
+}

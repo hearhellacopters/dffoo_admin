@@ -1,13 +1,15 @@
-import React, { Suspense, useState } from 'react';
+import React, { Suspense, useState, useEffect } from 'react';
 import { Navigate, BrowserRouter, Route, Routes } from 'react-router-dom';
+import { startSocket, subscribeConnectionState } from "./services/socket.js";
 import Loading from './components/Loading.jsx';
 import NotFound from './404.jsx';
-const Layout = React.lazy(() => import("./components/Layout.jsx"));
-const Home = React.lazy(() => import('./Home.jsx'));
-const Settings = React.lazy(() => import('./Settings.jsx'));
-const Assets = React.lazy(() => import('./Assets.jsx'));
-const Patches = React.lazy(() => import('./Patches.jsx'));
-const Users = React.lazy(() => import('./Users.jsx'));
+import Layout from "./components/Layout.jsx";
+import Home from './Home.jsx';
+import Settings from './Settings.jsx';
+import Assets from './Assets.jsx';
+import Patches from './Patches.jsx';
+import Players from './Players.jsx';
+import TestPage from './testPage.jsx';
 import './css/App.css';
 
 const getQuery = () => {
@@ -57,10 +59,28 @@ class ErrorBoundary extends React.Component {
  * App entry point
  */
 export default function App() {
-    const [needsRestart, setNeedsRestart] = useState(false);
+    const [connectedState, setConnectedState] = useState("Disconnected");
+
+    const [connected     , setConnected     ] = useState(false);
+
+    const [needsRestart  , setNeedsRestart  ] = useState(false);
+
+    useEffect(() => {
+        startSocket();
+
+        return subscribeConnectionState(setConnectedState);
+    }, []);
+
+    useEffect(() => {
+        if(connectedState == "Connected"){
+            setConnected(true);
+        } else {
+            setConnected(false);
+        }
+    }, [connectedState]);
 
     return (
-        <div>
+        <>
             <title>Opera Omnia Server Management</title>
             <BrowserRouter >
                 <ErrorBoundary>
@@ -76,26 +96,42 @@ export default function App() {
 
                                 <Route path="/" exact element={
                                     <Home 
+                                        connected={connected}
                                         setNeedsRestart={setNeedsRestart}
                                     />
                                 } />
 
                                 <Route path="/settings" exact element={
                                     <Settings 
+                                        connected={connected}
                                         setNeedsRestart={setNeedsRestart}
                                     />
                                 } />
 
                                 <Route path="/assets" exact element={
                                     <Assets 
+                                        connected={connected}
                                         setNeedsRestart={setNeedsRestart}
                                     />
                                 } />
 
-                                <Route path="/patches" exact element={<Patches />} />
+                                <Route path="/patches" exact element={
+                                    <Patches 
+                                        connected={connected}
+                                        setNeedsRestart={setNeedsRestart}
+                                    />} 
+                                />
 
-                                <Route path="/users" exact element={
-                                    <Users 
+                                <Route path="/players" exact element={
+                                    <Players 
+                                        connected={connected}
+                                        setNeedsRestart={setNeedsRestart}
+                                    />
+                                } />
+
+                                <Route path="/testPage" exact element={
+                                    <TestPage 
+                                        connected={connected}
                                         setNeedsRestart={setNeedsRestart}
                                     />
                                 } />
@@ -110,6 +146,6 @@ export default function App() {
                     </Layout>
                 </ErrorBoundary>
             </BrowserRouter>
-        </div>
+        </>
     )
 };

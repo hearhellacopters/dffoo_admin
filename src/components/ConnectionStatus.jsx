@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { startSocket, subscribeConnectionState } from '../services/socket';
+import { subscribeConnectionState } from '../services/socket';
 
 /**
  * Connection Dot Icon
@@ -8,8 +8,6 @@ export default function ConnectionStatus() {
     const [connectedState, setConnectedState] = useState("Disconnected");
 
     useEffect(() => {
-        startSocket();
-
         return subscribeConnectionState(setConnectedState);
     }, []);
 

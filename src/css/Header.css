@@ -1,17 +1,25 @@
 .header-header {
+    min-width: 330px;
     height: 50px;
-    background-color: #1e1e1e;
+    transition: .2s;
+    position: fixed;
+    z-index: 998;
+    width: 100%;
+    background: linear-gradient(180deg, #727272 0, #000 95%, #000 98%, #fff 100%);
+    border-bottom: 1px solid #333;
     display: flex;
+    flex-direction: row;
+    flex-wrap: nowrap;
+    align-content: center;
+    justify-content: space-around;
     align-items: center;
-    justify-content: space-between;
-    padding: 0 12px;
-    border-bottom: 1px solid #333
 }
 
 .header-left-header {
     display: flex;
     align-items: center;
-    gap: 12px
+    gap: 12px;
+    padding-left: 10px;
 }
 
 .header-hamburger {
@@ -23,7 +31,6 @@
 }
 
 .header-logo {
-    text-align: center;
     font-weight: bold;
     font-size: 14px;
     letter-spacing: 0.5px
@@ -32,6 +39,7 @@
 .header-header-right {
     font-size: 24px;
     margin-bottom: -8px;
+    padding-right: 10px;
 }
 
 .header-banner-image {

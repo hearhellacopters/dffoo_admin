@@ -1,5 +1,5 @@
 .sidebar {
-    width: 220px;
+    width: 13rem;
     background-color: #1b1b1b;
     border-right: 1px solid #333;
 }
@@ -23,6 +23,21 @@
     color: #bbb;
     transition: all 0.15s ease;
     text-decoration: none;
+}
+
+@media (hover: hover) {
+    .sidebar-menu-item:hover{
+        filter: brightness(1.3);
+        -webkit-filter: brightness(1.3);
+        transition: all ease 0.3s;
+        background-color: #272727;
+    }
+    .sidebar-active-item:hover{
+        background-color: #363636;
+        filter: brightness(1.3);
+        -webkit-filter: brightness(1.3);
+        transition: all ease 0.3s;
+    }
 }
 
 .sidebar-active-item {

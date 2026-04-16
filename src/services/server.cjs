@@ -787,7 +787,7 @@ async function _admin_route(req, res, ADMIN_URL) {
 
         const endpoint = get_endpoint(req.url);
 
-        if (/\/test(.*)/.test(endpoint)) {
+        if (/\/test$/.test(endpoint)) {
             Logger.info("Test log");
 
             Logger.warn("Warning log");
@@ -905,28 +905,41 @@ function _handle_admin_route(body, file, urlParams, ipAddress = "", res) {
  * 
  * @example
  * ```js
- * updateEnvVariable({key: "API_KEY", value: "new-secret-key"});
+ * updateEnvVariable({"API_KEY": "new-secret-key"});
  * ```
  * 
- * @param {{key: string, value: string}} updateValue - key and value to change
+ * @param {{[key: string]: string}} updateValues - key and value to change
  */
-function updateEnvVariable(updateValue) {
+function updateEnvVariable(updateValues) {
+    const keys = Object.keys(updateValues);
+
     var updated = false;
 
-    const {
-        key,
-        value
-    } = updateValue;
-    // @ts-ignore
-    if(CURRENT_CONST_VALUES.CURRENT_ENV_VALUES[key] != value){
+    const updatedValues = [];
+
+    for (let i = 0; i < keys.length; i++) {
+        const key = keys[i];
+
+        const value = updateValues[key];
         // @ts-ignore
-        CURRENT_CONST_VALUES.CURRENT_ENV_VALUES[key] = value;
+        if(CURRENT_CONST_VALUES.CURRENT_ENV_VALUES[key] != value){
+            // @ts-ignore
+            CURRENT_CONST_VALUES.CURRENT_ENV_VALUES[key] = value;
 
-        updated = true;
+            updatedValues.push({key: key, value: value });
+
+            updated = true;
+        }
     }
-
+    
     if (updated) {
-        Logger.info(`Updated .env ${updateValue.key}="${updateValue.value}"`);
+        Logger.info(`Updated .env values:`);
+
+        for (let i = 0; i < updatedValues.length; i++) {
+            const el = updatedValues[i];
+
+            Logger.info(`     ${el.key}="${el.value}"`);
+        }
 
         Logger.info(`Please restart server for changes to take affect.`);
 
@@ -1003,6 +1016,36 @@ function humanReadable(date = undefined) {
         timeZone: 'UTC',
         weekday: "short",
     }).format(date);
+};
+
+const serverDB = {
+    "ins_id": 100000000,
+    "uid": 1000000,
+    "player_id": 100000002,
+    "player_accounts": 3,
+    /**
+     * @type {{GL: {iOS?: string, Android?: string}, JP: {iOS?: string, Android?: string}}}
+     */
+    "assets": {
+        "GL": {
+            "iOS": "839e68579466558d31917fdfd4154524114623b6b23df15b310274a741075522",
+            //"Android": "ce8546797ce3769afccfa21d96d8871f86eb5006101965ac8985c83c331c4c17"
+        },
+        "JP": {
+            "Android": "c800cf2effe770887ef0f41e1d1bbf34dff2e74774d77f1d1bf11a4862866d19",
+            "iOS": "0fd0761ab659ee763ca6b6911d738cf2f8c0e699c1137b1068a1b414d11bfc3a"
+        }
+    },
+    "patches": [
+        {
+            "name": "Default_GL_Patch",
+            "patch_version": "0.0.1",
+            "game_version": "GL",
+            "requires": [],
+            "conflicts": [],
+            "hash": "866b8e1ffa1ca61f3005e565c5562fd572329745a63643c4928d47fde1e5c1bc"
+        }
+    ]
 };
 
 /**
@@ -1097,10 +1140,11 @@ function _admin_websocket_functions(send, ws, msg, jobId) {
                             progress: 0
                         }
                     });
-
                 }
                 // faked here for now
                 let percent = 0;
+
+                var supper = "super"
 
                 const interval = setInterval(() => {
                     percent += 10;
@@ -1110,19 +1154,25 @@ function _admin_websocket_functions(send, ws, msg, jobId) {
                         id: msg.id,
                         payload: { 
                             jobId, 
-                            status: "Processing...", 
+                            task: "Installing asset.",
+                            status: `Processing but with a ${supper} long string...`, 
                             progress: percent 
                         }
                     });
 
+                    supper += " super";
+
                     if (percent >= 100) {
                         clearInterval(interval);
+
+                        serverDB.assets[msg.payload.version][msg.payload.os] = "hash_string";
 
                         send(ws, {
                             type: "jobComplete",
                             id: msg.id,
                             payload: { 
                                 jobId, 
+                                task: "Installing asset.",
                                 status: "Asset install complete!", 
                                 success: true 
                             }
@@ -1157,6 +1207,8 @@ function _admin_websocket_functions(send, ws, msg, jobId) {
                     // faked here for now
                     let percent = 0;
 
+                    let supper = "super";
+
                     const interval = setInterval(() => {
                         percent += 10;
 
@@ -1165,19 +1217,25 @@ function _admin_websocket_functions(send, ws, msg, jobId) {
                             id: msg.id,
                             payload: { 
                                 jobId, 
-                                status: "Processing...", 
+                                task: "Uninstalling asset.",
+                                status: `Processing but with a ${supper} long string...`, 
                                 progress: percent 
                             }
                         });
 
+                        supper += " super";
+
                         if (percent >= 100) {
                             clearInterval(interval);
+
+                            delete serverDB.assets[msg.payload.version][msg.payload.os];
 
                             send(ws, {
                                 type: "jobComplete",
                                 id: msg.id,
                                 payload: { 
                                     jobId, 
+                                    task: "Uninstalling asset.",
                                     status: "Asset uninstall complete!", 
                                     success: true 
                                 }
@@ -1209,6 +1267,7 @@ function _admin_websocket_functions(send, ws, msg, jobId) {
                         id: msg.id,
                         payload: { 
                             jobId, 
+                            task: "Installing patch.",
                             status: "Processing...", 
                             progress: percent 
                         }
@@ -1222,6 +1281,7 @@ function _admin_websocket_functions(send, ws, msg, jobId) {
                             id: msg.id,
                             payload: { 
                                 jobId, 
+                                task: "Installing patch.",
                                 status: "Patch install complete!", 
                                 success: true 
                             }
@@ -1252,6 +1312,7 @@ function _admin_websocket_functions(send, ws, msg, jobId) {
                         id: msg.id,
                         payload: { 
                             jobId, 
+                            task: "Uninstalling patch.",
                             status: "Processing...", 
                             progress: percent 
                         }
@@ -1265,6 +1326,7 @@ function _admin_websocket_functions(send, ws, msg, jobId) {
                             id: msg.id,
                             payload: { 
                                 jobId, 
+                                task: "Uninstalling patch.",
                                 status: "Patch uninstall complete!", 
                                 success: true 
                             }
@@ -1273,10 +1335,10 @@ function _admin_websocket_functions(send, ws, msg, jobId) {
                 }, 500);
             }
             break;
-        case "deleteAccount":
+        case "deletePlayerAccount":
             {
                 send(ws, {
-                    type: "deleteAccount",
+                    type: "deletePlayerAccount",
                     id: msg.id,
                     payload: { 
                         success: true 
@@ -1284,32 +1346,52 @@ function _admin_websocket_functions(send, ws, msg, jobId) {
                 });
             }
             break;
-        case "getUserAccounts":
+        case "deletePlayerID":
+            {
+                send(ws, {
+                    type: "deletePlayerID",
+                    id: msg.id,
+                    payload: { 
+                        success: true 
+                    }
+                });
+            }
+            break;
+        case "getPlayerAccounts":
             {
                 const dummy = [
                     {
                         id: 1,
                         uuid: "550e8400-e29b-41d4-a716-446655440000",
                         player_id: "Player123",
-                        ip_address: "192.168.1.10"
+                        ip_address: "192.168.1.10",
+                        rebalance: false,
+                        version: "GL",
+                        create_at: "March 1st 2026",
                     },
                     {
                         id: 2,
                         uuid: "e4d909c2-5f57-4b39-9c2a-1a2b3c4d5e6f",
                         player_id: "Player456",
-                        ip_address: "192.168.1.11"
+                        ip_address: "192.168.1.11",
+                        rebalance: true,
+                        version: "GL",
+                        create_at: "March 2nd 2026",
                     },
                     {
                         id: 3,
                         uuid: "e4d90912-5f57-4b59-9c2a-1a2b3c455e6f",
                         player_id: "Player789",
-                        ip_address: "192.168.1.12"
+                        ip_address: "192.168.1.12",
+                        rebalance: false,
+                        version:  "JP",
+                        create_at: "March 3rd 2026",
                     }
                 ];
 
                 if(msg.payload.uuid){
                     send(ws, {
-                        type: "getUserAccounts",
+                        type: "getPlayerAccounts",
                         id: msg.id,
                         payload: { 
                             success: true,
@@ -1318,7 +1400,7 @@ function _admin_websocket_functions(send, ws, msg, jobId) {
                     });
                 } else if(msg.payload.player_id){
                     send(ws, {
-                        type: "getUserAccounts",
+                        type: "getPlayerAccounts",
                         id: msg.id,
                         payload: { 
                             success: true,
@@ -1327,7 +1409,7 @@ function _admin_websocket_functions(send, ws, msg, jobId) {
                     });
                 } else if(msg.payload.ip_address){
                     send(ws, {
-                        type: "getUserAccounts",
+                        type: "getPlayerAccounts",
                         id: msg.id,
                         payload: { 
                             success: true,
@@ -1336,7 +1418,7 @@ function _admin_websocket_functions(send, ws, msg, jobId) {
                     });
                 } else {
                     send(ws, {
-                        type: "getUserAccounts",
+                        type: "getPlayerAccounts",
                         id: msg.id,
                         payload: { 
                             success: true,
@@ -1408,7 +1490,29 @@ function _admin_websocket_functions(send, ws, msg, jobId) {
                     type: "displayURLs",
                     id: msg.id,
                     payload: { 
-                        success: true 
+                        success: true,
+                        data:[
+                            {
+                                string: true,
+                                link: false,
+                                text: "test 1",
+                            },
+                            {
+                                string: false,
+                                link: true,
+                                text: "http://www.google.com"
+                            },
+                            {
+                                string: true,
+                                link: false,
+                                text: "test 2",
+                            },
+                            {
+                                string: false,
+                                link: true,
+                                text: "http://www.google.com/test"
+                            },
+                        ]
                     }
                 });
             }
@@ -1454,7 +1558,7 @@ function _admin_websocket_functions(send, ws, msg, jobId) {
                         "name": "dummy_patch2",
                         "file": "dummy_patch2.zip",
                         "patch_version": "0.0.1",
-                        "game_version": "GL",
+                        "game_version": "JP",
                         "min_server_version": "0.0.1",
                         "desc": "Not a real patch 2.",
                         "requires": [],
@@ -1478,31 +1582,7 @@ function _admin_websocket_functions(send, ws, msg, jobId) {
                 send(ws, {
                     type: "getServerDB",
                     id: msg.id,
-                    payload: {
-                        "ins_id": 100000000,
-                        "uid": 1000000,
-                        "player_id": 100000002,
-                        "assets": {
-                            "GL": {
-                                "iOS": "839e68579466558d31917fdfd4154524114623b6b23df15b310274a741075522",
-                                "Android": "ce8546797ce3769afccfa21d96d8871f86eb5006101965ac8985c83c331c4c17"
-                            },
-                            "JP": {
-                                "Android": "c800cf2effe770887ef0f41e1d1bbf34dff2e74774d77f1d1bf11a4862866d19",
-                                "iOS": "0fd0761ab659ee763ca6b6911d738cf2f8c0e699c1137b1068a1b414d11bfc3a"
-                            }
-                        },
-                        "patches": [
-                            {
-                                "name": "Default_GL_Patch",
-                                "patch_version": "0.0.1",
-                                "game_version": "GL",
-                                "requires": [],
-                                "conflicts": [],
-                                "hash": "866b8e1ffa1ca61f3005e565c5562fd572329745a63643c4928d47fde1e5c1bc"
-                            }
-                        ]
-                    }
+                    payload: serverDB
                 });
             }
             break;
@@ -1515,26 +1595,9 @@ function _admin_websocket_functions(send, ws, msg, jobId) {
                 });
             }
             break;
-        case "getConstValues":
+        case "setEnvValues":
             {
-                send(ws, {
-                    type: "getEnvValues",
-                    id: msg.id,
-                    payload: CURRENT_CONST_VALUES
-                });
-            }
-            break;
-        case "setEnvValue":
-            {
-                const values = CURRENT_CONST_VALUES.CURRENT_ENV_VALUES;
-                
-                if ((msg.payload && msg.payload.key == undefined) ||
-                    (msg.payload && msg.payload.value == undefined) ||
-                    // @ts-ignore
-                    values[msg.payload.key] == undefined ||
-                    // @ts-ignore
-                    (typeof values[msg.payload.key] != typeof msg.payload.value)
-                ) {
+                if (Object.keys(msg.payload).length == 0){
                     send(ws, {
                         type: "error",
                         id: msg.id,
@@ -1543,16 +1606,25 @@ function _admin_websocket_functions(send, ws, msg, jobId) {
                         }
                     });
                 } else {
-                    const success = updateEnvVariable({ key: msg.payload.key, value: `${msg.payload.value}` });
+                    const success = updateEnvVariable(msg.payload);
 
                     send(ws, {
-                        type: "setEnvValue",
+                        type: "setEnvValues",
                         id: msg.id,
                         payload: {
                             success: success
                         }
                     });
                 }
+            }
+            break;
+        case "getConstValues":
+            {
+                send(ws, {
+                    type: "getConstValues",
+                    id: msg.id,
+                    payload: CURRENT_CONST_VALUES
+                });
             }
             break;
         case "startProcess":
@@ -1574,6 +1646,7 @@ function _admin_websocket_functions(send, ws, msg, jobId) {
                         id: msg.id,
                         payload: { 
                             jobId, 
+                            task: "Task name.",
                             status: "Processing...", 
                             progress: percent 
                         }
@@ -1587,12 +1660,28 @@ function _admin_websocket_functions(send, ws, msg, jobId) {
                             id: msg.id,
                             payload: { 
                                 jobId, 
+                                task: "Task name.",
                                 status: "File processed successfully", 
                                 success: true 
                             }
                         });
                     }
                 }, 500);
+            }
+            break;
+        case "purgeLogs":
+            {
+                Logger.log(`Deleting non-active log files.`);
+
+                Logger.log(`Non-active log files deleted!`);
+
+                send(ws, {
+                    type: "purgeLogs",
+                    id: msg.id,
+                    payload: {
+                        success: true
+                    }
+                });
             }
             break;
         case "test":
