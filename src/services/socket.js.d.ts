@@ -393,6 +393,8 @@ export interface RequestMap {
                         name: string;
                         patch_version: string;
                     }[];
+                    hasAssets: boolean;
+                    hasConfigs: boolean;
                     hash: string;
                 }[];
             }
@@ -539,7 +541,10 @@ export interface RequestMap {
             payload: {
                 update: boolean,
                 version: string,
-                urls: string[]
+                urls: {
+                    title: string,
+                    url: string
+                }[]
             }
         }
     },
