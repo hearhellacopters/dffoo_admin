@@ -232,7 +232,7 @@ export interface RequestMap {
                 /**
                  * If the game data has an active rebalance
                  */
-                REBALANCE: boolean;
+                REBALANCE: number;
                 /**
                  * Server software version number
                  */
@@ -885,7 +885,7 @@ export interface RequestMap {
                     uuid: string;
                     player_id: string;
                     ip_address: string;
-                    rebalance: boolean;
+                    rebalance: number;
                     version: "GL" | "JP";
                     create_at: string
                 }[]

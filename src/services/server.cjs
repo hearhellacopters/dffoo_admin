@@ -1249,7 +1249,7 @@ const PATCH_LIST = [
 /**
  * Dummy player accounts. Enough entries to exercise pagination.
  *
- * @type {{id: number, uuid: string, player_id: string, ip_address: string, rebalance: boolean, version: "GL"|"JP", create_at: string}[]}
+ * @type {{id: number, uuid: string, player_id: string, ip_address: string, rebalance: number, version: "GL"|"JP", create_at: string}[]}
  */
 const PLAYER_ACCOUNTS = [];
 
@@ -1259,7 +1259,7 @@ for (let i = 0; i < 23; i++) {
         uuid: `550e8400-e29b-41d4-a716-4466554400${`${i}`.padStart(2, "0")}`,
         player_id: `Player${100 + i}`,
         ip_address: `192.168.1.${10 + i}`,
-        rebalance: i % 3 == 0,
+        rebalance: i % 3,
         version: i % 4 == 0 ? "JP" : "GL",
         create_at: humanReadable(new Date(2026, 2, i + 1))
     });
@@ -1638,6 +1638,16 @@ function _admin_websocket_functions(send, ws, msg, jobId) {
                         }
                     });
                 } else {
+                    if(PLAYER_ACCOUNTS[index]?.player_id == "999999999"){
+                        send(ws, {
+                            type: "error",
+                            id: msg.id,
+                            payload: {
+                                message: "Can't delete dummy account."
+                            }
+                        });
+                    }
+
                     PLAYER_ACCOUNTS.splice(index, 1);
 
                     serverDB.player_accounts = PLAYER_ACCOUNTS.length;

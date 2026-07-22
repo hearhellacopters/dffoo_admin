@@ -125,6 +125,12 @@ export default function Players({ connected, setNeedsRestart }){
         }
 
         try {
+            if(modal.account.player_id == "999999999"){
+                setActionMessage(`Can't delete dummy account.`);
+
+                return;
+            }
+            
             const res = await request("deletePlayerID", { id: modal.account.id });
 
             if (res.type == "deletePlayerID" && res.payload.success) {
