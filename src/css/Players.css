@@ -1,0 +1,99 @@
+.players-table {
+    margin: 10px;
+    border: 2px solid #efefef;
+    border-spacing: 0;
+}
+
+.players-table-header {
+    background-color: #2a2a2a;
+}
+
+.players-th {
+    padding: 8px;
+    text-align: center;
+    font-size: 0.9rem;
+}
+
+.players-border-bottom {
+    border-bottom: 2px solid #efefef;
+}
+
+.players-border-left {
+    border-left: 1px solid #efefef;
+}
+
+.players-border-right {
+    border-right: 1px solid #efefef;
+}
+
+.players-subborder {
+    border-bottom: 1px solid #595959;
+    border-left: 1px solid #595959;
+    border-right: 1px solid #595959;
+}
+
+.players-uuid {
+    font-size: 0.8rem;
+    font-family: monospace;
+}
+
+.players-btn {
+    margin: 2px 5px;
+    padding: 5px;
+    border-width: 2px;
+}
+
+.players-delete-btn {
+    display: inline-block;
+    padding: 5px;
+    margin: 2px 5px;
+    border: 2px outset #000;
+    box-sizing: border-box;
+    font-size: 13.3333px;
+    text-align: center;
+}
+
+.players-search {
+    margin: 10px 5px;
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+}
+
+.players-pagination {
+    margin: 0px 10px;
+    display: flex;
+    align-items: center;
+}
+
+.players-page-info {
+    margin: 0px 10px;
+    font-size: 0.9rem;
+}
+
+.players-modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.7);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 100;
+}
+
+.players-modal {
+    background-color: #1e1e1e;
+    border: 2px solid #efefef;
+    padding: 15px;
+    max-width: 24rem;
+    width: 90%;
+}
+
+.players-modal-buttons {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 10px;
+}
