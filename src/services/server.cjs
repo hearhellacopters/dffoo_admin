@@ -1057,6 +1057,8 @@ const serverDB = {
  * - dummy_patch2     : blocked, needs server 0.0.2 (mock runs 0.0.1)
  * - dummy_patch3     : blocked, requires dummy_patch2 which is not installed
  * - legacy_balance_patch : blocked, conflicts with installed Default_GL_Patch
+ * - dummy_patch4 / dummy_patch5 / summer_event_patch : filler entries so the
+ *   patches page pagination has more than one page
  */
 const PATCH_LIST = [
     {
@@ -1174,6 +1176,68 @@ const PATCH_LIST = [
         "files": [
             {
                 "name": "legacy_balance_patch.zip",
+                "mega": "1yIGyB4J#rO6G16179UuLTJiHhdwdcUOBsCxY52J4CfWfJ75XpQ4",
+                "google": "1XeJ1uf5feK6Gxi4YqndHSoXgIvffpIIV",
+                "hash": "866b8e1ffa1ca61f3005e565c5562fd572329745a63643c4928d47fde1e5c1bc"
+            }
+        ]
+    },
+    {
+        "name": "dummy_patch4",
+        "file": "dummy_patch4.zip",
+        "patch_version": "0.0.1",
+        "game_version": "GL",
+        "min_server_version": "0.0.1",
+        "desc": "Not a real patch 4.",
+        "requires": [],
+        "conflicts": [],
+        "hash": "866b8e1ffa1ca61f3005e565c5562fd572329745a63643c4928d47fde1e5c1bc",
+        "files": [
+            {
+                "name": "dummy_patch4.zip",
+                "mega": "1yIGyB4J#rO6G16179UuLTJiHhdwdcUOBsCxY52J4CfWfJ75XpQ4",
+                "google": "1XeJ1uf5feK6Gxi4YqndHSoXgIvffpIIV",
+                "hash": "866b8e1ffa1ca61f3005e565c5562fd572329745a63643c4928d47fde1e5c1bc"
+            }
+        ]
+    },
+    {
+        "name": "dummy_patch5",
+        "file": "dummy_patch5.zip",
+        "patch_version": "0.0.1",
+        "game_version": "JP",
+        "min_server_version": "0.0.1",
+        "desc": "Not a real patch 5.",
+        "requires": [],
+        "conflicts": [],
+        "hash": "866b8e1ffa1ca61f3005e565c5562fd572329745a63643c4928d47fde1e5c1bc",
+        "files": [
+            {
+                "name": "dummy_patch5.zip",
+                "mega": "1yIGyB4J#rO6G16179UuLTJiHhdwdcUOBsCxY52J4CfWfJ75XpQ4",
+                "google": "1XeJ1uf5feK6Gxi4YqndHSoXgIvffpIIV",
+                "hash": "866b8e1ffa1ca61f3005e565c5562fd572329745a63643c4928d47fde1e5c1bc"
+            }
+        ]
+    },
+    {
+        "name": "summer_event_patch",
+        "file": "summer_event_patch.zip",
+        "patch_version": "0.0.3",
+        "game_version": "GL",
+        "min_server_version": "0.0.1",
+        "desc": "Summer event data. Requires the dummy patch to be installed first.",
+        "requires": [
+            {
+                "name": "dummy_patch",
+                "patch_version": "0.0.1"
+            }
+        ],
+        "conflicts": [],
+        "hash": "866b8e1ffa1ca61f3005e565c5562fd572329745a63643c4928d47fde1e5c1bc",
+        "files": [
+            {
+                "name": "summer_event_patch.zip",
                 "mega": "1yIGyB4J#rO6G16179UuLTJiHhdwdcUOBsCxY52J4CfWfJ75XpQ4",
                 "google": "1XeJ1uf5feK6Gxi4YqndHSoXgIvffpIIV",
                 "hash": "866b8e1ffa1ca61f3005e565c5562fd572329745a63643c4928d47fde1e5c1bc"
