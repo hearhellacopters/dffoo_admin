@@ -348,9 +348,13 @@ export interface RequestMap {
                     name: string;
                     patch_version: string;
                 }[];
-                mega: string;
-                google: string;
-                hash: string;
+                hash: string,
+                files: {
+                    name: string;
+                    mega: string;
+                    google: string;
+                    hash: string;
+                }[]
             }[]
         }
     },
