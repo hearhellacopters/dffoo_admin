@@ -2,6 +2,8 @@ import { useState, useRef, useEffect } from "react";
 import { subscribe, request } from "./services/socket.js";
 import "./css/Patches.css";
 
+const PAGE_SIZE = 5;
+
 /**
  * Patches page
  *
@@ -11,35 +13,33 @@ export default function Patches({ connected, setNeedsRestart }) {
     /**
      * @type {[import('./services/socket.js').RequestMap["getConstValues"]["response"]["payload"], (any)=> void]}
      */
-    const [currentConsts  , setCurrentConsts  ] = useState();
+    const [currentConsts, setCurrentConsts] = useState();
     /**
      * @type {[import('./services/socket.js').RequestMap["getPatches"]["response"]["payload"], (any)=> void]}
      */
-    const [patchData      , setPatchData      ] = useState();
+    const [patchData    , setPatchData    ] = useState();
     /**
      * @type {[import('./services/socket.js').RequestMap["getServerDB"]["response"]["payload"], (any)=> void]}
      */
-    const [serverDB       , setServerDB       ] = useState();
-
-    const [selectedPatch  , setSelectedPatch  ] = useState();
-    /**
-     * @type {["installPatch" | "uninstallPatch", (any)=> void]}
-     */
-    const [runType        , setRunType        ] = useState();
+    const [serverDB     , setServerDB     ] = useState();
     /**
      * @type {[boolean, (any)=> void]}
      */
-    const [deleteAfter    , setDeleteAfter    ] = useState(false);
+    const [deleteAfter  , setDeleteAfter  ] = useState(false);
+    /**
+     * The currently running job. Only one patch job runs at a time.
+     *
+     * @type {[{name: string, type: "installPatch" | "uninstallPatch", progress: number, status: string} | undefined, (any)=> void]}
+     */
+    const [activeJob    , setActiveJob    ] = useState();
+    /**
+     * Result of the last finished job, shown inline in that patch's row.
+     *
+     * @type {[{name: string, status: string, success: boolean} | undefined, (any)=> void]}
+     */
+    const [lastJob      , setLastJob      ] = useState();
 
-    const [jobRunning     , setJobRunning     ] = useState(false);
-
-    const [finishedRunning, setFinishedRunning] = useState(true);
-
-    const [progress       , setProgress       ] = useState(0);
-
-    const [status         , setStatus         ] = useState("Awaiting status.");
-
-    const [task           , setTask           ] = useState("Awaiting task.");
+    const [page         , setPage         ] = useState(1);
 
     const jobs = useRef(new Map());
 
@@ -116,6 +116,15 @@ export default function Patches({ connected, setNeedsRestart }) {
     }, []);
 
     /**
+     * Readable patch name, underscores become spaces.
+     *
+     * @param {string} name Patch name
+     */
+    function displayName(name) {
+        return name.split("_").join(" ");
+    };
+
+    /**
      * Compares if the current >= target
      *
      * @param {string} current Current version string
@@ -180,9 +189,9 @@ export default function Patches({ connected, setNeedsRestart }) {
             const installed = getInstalled(req.name);
 
             if (installed == undefined) {
-                issues.push(`Requires patch ${req.name} v${req.patch_version}.`);
+                issues.push(`Requires patch ${displayName(req.name)} v${req.patch_version}.`);
             } else if (!versionMet(installed.patch_version, req.patch_version)) {
-                issues.push(`Requires patch ${req.name} v${req.patch_version} (installed v${installed.patch_version}).`);
+                issues.push(`Requires patch ${displayName(req.name)} v${req.patch_version} (installed v${installed.patch_version}).`);
             }
         }
 
@@ -190,7 +199,7 @@ export default function Patches({ connected, setNeedsRestart }) {
             const conflict = patch.conflicts[i];
 
             if (getInstalled(conflict.name) != undefined) {
-                issues.push(`Conflicts with installed patch ${conflict.name}.`);
+                issues.push(`Conflicts with installed patch ${displayName(conflict.name)}.`);
             }
         }
         // installed patches can also list this patch as a conflict
@@ -200,7 +209,7 @@ export default function Patches({ connected, setNeedsRestart }) {
             if (installed.name != patch.name &&
                 installed.conflicts.findIndex(self => self.name == patch.name) != -1
             ) {
-                issues.push(`Installed patch ${installed.name} conflicts with this patch.`);
+                issues.push(`Installed patch ${displayName(installed.name)} conflicts with this patch.`);
             }
         }
 
@@ -226,27 +235,11 @@ export default function Patches({ connected, setNeedsRestart }) {
             if (installed.name != patch.name &&
                 installed.requires.findIndex(self => self.name == patch.name) != -1
             ) {
-                issues.push(`Installed patch ${installed.name} requires this patch.`);
+                issues.push(`Installed patch ${displayName(installed.name)} requires this patch.`);
             }
         }
 
         return issues;
-    };
-
-    /**
-     * @param {import('./services/socket.js').RequestMap["getPatches"]["response"]["payload"][0]} patch
-     * @param {"installPatch" | "uninstallPatch"} type
-     */
-    function prepJob(patch, type){
-        setFinishedRunning(true);
-
-        setStatus("Awaiting status.");
-
-        setTask("Awaiting task.");
-
-        setRunType(type);
-
-        setSelectedPatch(patch.name);
     };
 
     async function getServerDB(){
@@ -263,13 +256,20 @@ export default function Patches({ connected, setNeedsRestart }) {
         }
     };
 
-    async function startProcess() {
-        if(jobRunning || !finishedRunning){
+    /**
+     * Runs an install or uninstall job for a patch. Progress is shown
+     * inline in the patch's actions cell.
+     *
+     * @param {import('./services/socket.js').RequestMap["getPatches"]["response"]["payload"][0]} patch
+     * @param {"installPatch" | "uninstallPatch"} type
+     */
+    async function startJob(patch, type) {
+        if (activeJob != undefined) {
             return;
         }
 
         try {
-            const message = runType == "installPatch" ? `Are you sure you want to install the ${selectedPatch} patch?` : `Are you sure you want to uninstall the ${selectedPatch} patch?`;
+            const message = type == "installPatch" ? `Are you sure you want to install ${displayName(patch.name)} v${patch.patch_version}?` : `Are you sure you want to uninstall ${displayName(patch.name)}?`;
 
             const run = confirm(message);
 
@@ -277,49 +277,39 @@ export default function Patches({ connected, setNeedsRestart }) {
                 return;
             }
 
-            const payload = runType == "installPatch" ? { patch: selectedPatch, deleteAfter: deleteAfter } : { patch: selectedPatch };
+            setLastJob();
 
-            const res = await request(runType, payload);
+            const payload = type == "installPatch" ? { patch: patch.name, deleteAfter: deleteAfter } : { patch: patch.name };
+
+            const res = await request(type, payload);
 
             if (res.type == "error") {
                 console.error(res.payload.message);
 
-                setStatus(res.payload.message);
-
-                setJobRunning(false);
+                setLastJob({ name: patch.name, status: res.payload.message, success: false });
 
                 return;
             } else {
                 const jobId = res.payload.jobId;
 
-                setStatus(res.payload.status);
-
-                setJobRunning(true);
-
-                setFinishedRunning(false);
+                setActiveJob({ name: patch.name, type: type, progress: 0, status: res.payload.status });
 
                 jobs.current.set(jobId, {
                     onProgress: async (data) => {
-                        setProgress(data.payload.progress);
-
-                        setStatus(data.payload.status);
-
-                        setTask(data.payload.task);
+                        setActiveJob((prevValue) => prevValue && {
+                            ...prevValue,
+                            progress: data.payload.progress,
+                            status: data.payload.status
+                        });
                     },
                     onComplete: async (data) => {
-                        setProgress(data.payload.success ? 100 : 0);
-
                         if(data.payload.success != 0){
                             setNeedsRestart(true);
-                        } else {
-                            setFinishedRunning(true);
                         }
 
-                        setStatus(data.payload.status);
+                        setLastJob({ name: patch.name, status: data.payload.status, success: data.payload.success });
 
-                        setTask(data.payload.task);
-
-                        setJobRunning(false);
+                        setActiveJob();
 
                         jobs.current.delete(jobId);
 
@@ -335,23 +325,34 @@ export default function Patches({ connected, setNeedsRestart }) {
     /**
      * @param {import('./services/socket.js').RequestMap["getPatches"]["response"]["payload"][0]} patch
      */
-    function actionButtons(patch) {
+    function actionsCell(patch) {
+        if (activeJob != undefined && activeJob.name == patch.name) {
+            return (
+                <div className="patches-job">
+                    <progress style={{width: "100%"}} value={activeJob.progress} max={100}>{`${activeJob.progress}%`}</progress>
+                    <div className="sub-header">{activeJob.status}</div>
+                </div>
+            );
+        }
+
         const installed = getInstalled(patch.name);
 
         const hasUpdate = installed != undefined &&
                           installed.patch_version != patch.patch_version &&
                           versionMet(patch.patch_version, installed.patch_version);
 
+        const busy = activeJob != undefined;
+
         const buttons = [];
 
         if (installed == undefined || hasUpdate) {
-            const issues = getInstallIssues(patch);
+            const issues = busy ? ["Another patch job is running."] : getInstallIssues(patch);
 
             const label = hasUpdate ? "Update" : "Install";
 
             if (issues.length == 0) {
                 buttons.push(
-                    <div key={label} title={`${label} patch`} className="general-btn patches-btn" onClick={() => prepJob(patch, "installPatch")}>
+                    <div key={label} title={`${label} patch`} className="general-btn patches-btn" onClick={() => startJob(patch, "installPatch")}>
                         {label}
                     </div>
                 );
@@ -365,11 +366,11 @@ export default function Patches({ connected, setNeedsRestart }) {
         }
 
         if (installed != undefined) {
-            const issues = getUninstallIssues(patch);
+            const issues = busy ? ["Another patch job is running."] : getUninstallIssues(patch);
 
             if (issues.length == 0) {
                 buttons.push(
-                    <div key="uninstall" title="Uninstall patch" className="general-btn patches-btn" onClick={() => prepJob(patch, "uninstallPatch")}>
+                    <div key="uninstall" title="Uninstall patch" className="general-btn patches-btn" onClick={() => startJob(patch, "uninstallPatch")}>
                         Uninstall
                     </div>
                 );
@@ -382,7 +383,14 @@ export default function Patches({ connected, setNeedsRestart }) {
             }
         }
 
-        return buttons;
+        return (
+            <>
+                {buttons}
+                {lastJob == undefined || lastJob.name != patch.name ? "" :
+                    <div className={`patches-job-result ${lastJob.success ? "color-green" : "color-red"}`}>{lastJob.status}</div>
+                }
+            </>
+        );
     };
 
     /**
@@ -398,39 +406,48 @@ export default function Patches({ connected, setNeedsRestart }) {
         if (installed.patch_version != patch.patch_version &&
             versionMet(patch.patch_version, installed.patch_version)
         ) {
-            return <span className="color-yellow">{`⚠️ Update v${patch.patch_version}`}</span>;
+            return <span className="color-yellow" title={`Installed v${installed.patch_version}, update v${patch.patch_version} available`}>{`⚠️ v${installed.patch_version} → v${patch.patch_version}`}</span>;
         }
 
-        return <span className="color-green">✔️ Installed</span>;
+        return <span className="color-green" title="Patch is up to date">{`✔️ v${installed.patch_version}`}</span>;
     };
+
+    const totalPages = patchData == undefined ? 1 : Math.max(1, Math.ceil(patchData.length / PAGE_SIZE));
+
+    const safePage = Math.min(page, totalPages);
+
+    const pagePatches = patchData == undefined ? [] : patchData.slice((safePage - 1) * PAGE_SIZE, safePage * PAGE_SIZE);
 
     const patchesTable = (
         <table className="patches-table">
             <thead>
-                <tr className="patches-table-header">
-                    <th className="patches-th patches-border-bottom patches-border-right">Region</th>
-                    <th className="patches-th patches-border-bottom patches-border-left patches-border-right">Name</th>
-                    <th className="patches-th patches-border-bottom patches-border-left patches-border-right">Version</th>
-                    <th className="patches-th patches-border-bottom patches-border-left patches-border-right">Server Ver.</th>
-                    <th className="patches-th patches-border-bottom patches-border-left patches-border-right">Requires</th>
-                    <th className="patches-th patches-border-bottom patches-border-left patches-border-right">Conflicts</th>
-                    <th className="patches-th patches-border-bottom patches-border-left patches-border-right">Status</th>
-                    <th className="patches-th patches-border-bottom patches-border-left">Actions</th>
+                <tr>
+                    <th className="patches-center">Region</th>
+                    <th>Patch</th>
+                    <th className="patches-center">Version</th>
+                    <th className="patches-center">Server Ver.</th>
+                    <th>Requires</th>
+                    <th>Conflicts</th>
+                    <th className="patches-center">Status</th>
+                    <th className="patches-center">Actions</th>
                 </tr>
             </thead>
             <tbody>
-                {patchData && patchData.map((patch, index) => (
+                {pagePatches.map((patch, index) => (
                     <tr key={patch.name || index}>
-                        <td className="patches-th patches-subborder">{patch.game_version == "GL" ? <span title="Global" className="glFlag" /> : <span title="Japanese" className="jpFlag" />}</td>
-                        <td className="patches-th patches-subborder" title={patch.desc}>{patch.name}</td>
-                        <td className="patches-th patches-subborder">{patch.patch_version}</td>
-                        <td className="patches-th patches-subborder">
+                        <td className="patches-cell patches-center">{patch.game_version == "GL" ? <span title="Global" className="glFlag" /> : <span title="Japanese" className="jpFlag" />}</td>
+                        <td className="patches-cell">
+                            <div className="patches-name">{displayName(patch.name)}</div>
+                            <div className="sub-header">{patch.desc}</div>
+                        </td>
+                        <td className="patches-cell patches-center">{patch.patch_version}</td>
+                        <td className="patches-cell patches-center">
                             {currentConsts == undefined || versionMet(currentConsts.SERVER_VERSION, patch.min_server_version)
                                 ? <span title="Server version ok" className="color-green">{patch.min_server_version}</span>
                                 : <span title={`Requires server v${patch.min_server_version}`} className="color-red">{patch.min_server_version}</span>
                             }
                         </td>
-                        <td className="patches-th patches-subborder">
+                        <td className="patches-cell">
                             {patch.requires.length == 0 ? <span className="sub-header">-</span> :
                                 patch.requires.map(req => {
                                     const installed = getInstalled(req.name);
@@ -438,32 +455,47 @@ export default function Patches({ connected, setNeedsRestart }) {
                                     const met = installed != undefined && versionMet(installed.patch_version, req.patch_version);
 
                                     return (
-                                        <div key={req.name} title={met ? `${req.name} v${req.patch_version} installed` : `Requires ${req.name} v${req.patch_version}`}>
-                                            {met ? "✅" : "❌"} {req.name}
+                                        <div key={req.name} title={met ? `${displayName(req.name)} v${req.patch_version} installed` : `Requires ${displayName(req.name)} v${req.patch_version}`}>
+                                            {met ? "✅" : "❌"} {displayName(req.name)}
                                         </div>
                                     );
                                 })
                             }
                         </td>
-                        <td className="patches-th patches-subborder">
+                        <td className="patches-cell">
                             {patch.conflicts.length == 0 ? <span className="sub-header">-</span> :
                                 patch.conflicts.map(conflict => {
                                     const active = getInstalled(conflict.name) != undefined;
 
                                     return (
-                                        <div key={conflict.name} className={active ? "color-red" : ""} title={active ? `Conflicting patch ${conflict.name} is installed` : `Conflicts with ${conflict.name} (not installed)`}>
-                                            {active ? "⚠️" : "•"} {conflict.name}
+                                        <div key={conflict.name} className={active ? "color-red" : ""} title={active ? `Conflicting patch ${displayName(conflict.name)} is installed` : `Conflicts with ${displayName(conflict.name)} (not installed)`}>
+                                            {active ? "⚠️" : "•"} {displayName(conflict.name)}
                                         </div>
                                     );
                                 })
                             }
                         </td>
-                        <td className="patches-th patches-subborder">{statusCell(patch)}</td>
-                        <td className="patches-th patches-subborder">{actionButtons(patch)}</td>
+                        <td className="patches-cell patches-center">{statusCell(patch)}</td>
+                        <td className="patches-cell patches-center">{actionsCell(patch)}</td>
                     </tr>
                 ))}
             </tbody>
         </table>
+    );
+
+    const pagination = (
+        <div className="patches-pagination">
+            <div className={`general-btn${safePage <= 1 ? "-inactive" : ""} patches-btn`} onClick={() => safePage > 1 && setPage(safePage - 1)}>
+                ◀ Prev
+            </div>
+            <span className="patches-page-info">
+                {`Page ${safePage} of ${totalPages}`}
+                <span className="sub-header">{patchData == undefined ? "" : ` (${patchData.length} patch${patchData.length == 1 ? "" : "es"})`}</span>
+            </span>
+            <div className={`general-btn${safePage >= totalPages ? "-inactive" : ""} patches-btn`} onClick={() => safePage < totalPages && setPage(safePage + 1)}>
+                Next ▶
+            </div>
+        </div>
     );
 
     return (
@@ -488,55 +520,30 @@ export default function Patches({ connected, setNeedsRestart }) {
                         </ul>
                     </li>
                     <li>Blocked actions show a 🚫 icon, hover over them to see the reason.</li>
-                    <li>There is an option to keep the downloaded zip file or <span className="color-yellow">delete after</span> install (if you wish to back it up).</li>
+                    <li>There is an option to keep the downloaded zip files or <span className="color-yellow">delete after</span> install (if you wish to back them up).</li>
                 </ul>
             </div>
             <div style={{marginTop: "10px"}}>Patches:</div>
             <hr/>
             {(patchData == undefined || serverDB == undefined || currentConsts == undefined) ? "" :
-                patchesTable
-            }
-            {selectedPatch == undefined ? "" :
-                <table className="patches-table patches-job-table">
-                    <thead>
-                        <tr className="patches-table-subheader patches-border-bottom">
-                            <th>Patch:</th>
-                            <th className="color-yellow">{selectedPatch}</th>
-                            {runType != "installPatch" ? "" :
-                                <th style={{display: "flex"}} title="Deletes downloaded zip file after install">
-                                    <div style={{fontSize: ".8rem"}}>Delete zip<br/>after?</div>
-                                    <input
-                                        key={deleteAfter}
-                                        type="checkbox"
-                                        name="deleteAfter"
-                                        title="Deletes downloaded zip file after install"
-                                        checked={deleteAfter}
-                                        onChange={() => setDeleteAfter((prevValue)=>!prevValue)}
-                                        placeholder="false"
-                                    />
-                                </th>
-                            }
-                            <th><div onClick={startProcess} className={`general-btn${finishedRunning != true ? "-inactive" : ""}`}>{runType == "installPatch" ? "Install" : "Uninstall"}</div></th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <tr>
-                            <th style={{textAlign: "left", paddingLeft: "5px", paddingRight: "5px", overflowY: "auto", display:"block"}} className="patches-subborder-bottom" colSpan="4">{task}</th>
-                        </tr>
-                    </tbody>
-                    <tbody>
-                        <tr>
-                            <th className="patches-subborder-bottom" colSpan="4" style={{overflowY: "auto", minHeight: "1rem", display:"block"}}>
-                                <progress style={{width: "95%"}} value={progress} max={100}>{`${progress}%`}</progress>
-                            </th>
-                        </tr>
-                    </tbody>
-                    <tbody>
-                        <tr style={{overflowWrap: "break-word", hyphens: "manual"}}>
-                            <th className="color-yellow" colSpan="4" style={{fontSize: ".8rem", paddingLeft: "5px", paddingRight: "5px", overflowY: "auto", textAlign: "left", minHeight: "2rem", display:"block"}}>{status}</th>
-                        </tr>
-                    </tbody>
-                </table>
+                <>
+                    <div className="patches-options" title="Deletes downloaded zip files after install">
+                        <input
+                            key={deleteAfter}
+                            type="checkbox"
+                            name="deleteAfter"
+                            id="deleteAfter"
+                            checked={deleteAfter}
+                            onChange={() => setDeleteAfter((prevValue)=>!prevValue)}
+                            placeholder="false"
+                        />
+                        <label htmlFor="deleteAfter">
+                            &nbsp;Delete downloaded zip files after install?
+                        </label>
+                    </div>
+                    {patchesTable}
+                    {pagination}
+                </>
             }
         </div>
     )

@@ -1,56 +1,67 @@
 .patches-table {
-    margin: 10px;
-    border: 2px solid #efefef;
-    border-spacing: 0;
-}
-
-.patches-table-header {
-    background-color: #2a2a2a;
-}
-
-.patches-table-subheader {
-    background-color: #2a2a2a;
-    display: flex;
-    flex-direction: row;
-    flex-wrap: nowrap;
-    align-content: center;
-    justify-content: space-evenly;
-    align-items: center;
-}
-
-.patches-job-table {
-    width: 21rem;
-}
-
-.patches-th {
-    padding: 10px;
-    text-align: center;
+    margin: 10px 0px;
+    width: 100%;
+    max-width: 70rem;
+    border-collapse: collapse;
     font-size: 0.9rem;
 }
 
-.patches-border-bottom {
-    border-bottom: 2px solid #efefef;
-}
-
-.patches-border-left {
-    border-left: 1px solid #efefef;
-}
-
-.patches-border-right {
-    border-right: 1px solid #efefef;
-}
-
-.patches-subborder {
-    border-bottom: 1px solid #595959;
-    border-left: 1px solid #595959;
-    border-right: 1px solid #595959;
-}
-
-.patches-subborder-bottom {
+.patches-table thead th {
+    background-color: #2a2a2a;
+    padding: 8px 10px;
+    text-align: left;
     border-bottom: 2px solid #595959;
+}
+
+.patches-table tbody tr:nth-child(even) {
+    background-color: #202020;
+}
+
+.patches-cell {
+    padding: 8px 10px;
+    border-bottom: 1px solid #3a3a3a;
+    text-align: left;
+    vertical-align: middle;
+}
+
+.patches-center {
+    text-align: center;
+}
+
+.patches-name {
+    font-weight: bold;
+    text-transform: capitalize;
 }
 
 .patches-btn {
     margin: 2px 5px;
     min-width: 5rem;
+}
+
+.patches-job {
+    min-width: 8rem;
+    font-size: 0.8rem;
+}
+
+.patches-job-result {
+    font-size: 0.8rem;
+    max-width: 10rem;
+}
+
+.patches-options {
+    margin: 10px 5px;
+    display: flex;
+    align-items: center;
+    font-size: 0.9rem;
+}
+
+.patches-pagination {
+    margin: 0px 5px;
+    display: flex;
+    align-items: center;
+}
+
+.patches-page-info {
+    margin: 0px 10px;
+    font-size: 0.9rem;
 }
