@@ -1022,7 +1022,7 @@ const serverDB = {
     "ins_id": 100000000,
     "uid": 1000000,
     "player_id": 100000002,
-    "player_accounts": 3,
+    "player_accounts": 23,
     /**
      * @type {{GL: {iOS?: string, Android?: string}, JP: {iOS?: string, Android?: string}}}
      */
@@ -1046,6 +1046,168 @@ const serverDB = {
             "hash": "866b8e1ffa1ca61f3005e565c5562fd572329745a63643c4928d47fde1e5c1bc"
         }
     ]
+};
+
+/**
+ * Available patch list served by getPatches.
+ *
+ * Covers the dependency edge cases:
+ * - Default_GL_Patch : installed at 0.0.1, update available (0.0.2)
+ * - dummy_patch      : installable, requirement (Default_GL_Patch) satisfied
+ * - dummy_patch2     : blocked, needs server 0.0.2 (mock runs 0.0.1)
+ * - dummy_patch3     : blocked, requires dummy_patch2 which is not installed
+ * - legacy_balance_patch : blocked, conflicts with installed Default_GL_Patch
+ */
+const PATCH_LIST = [
+    {
+        "name": "Default_GL_Patch",
+        "file": "Default_GL_Patch.zip",
+        "patch_version": "0.0.2",
+        "game_version": "GL",
+        "min_server_version": "0.0.1",
+        "desc": "Required patch to play the GL version of the game.",
+        "requires": [],
+        "conflicts": [],
+        "hash": "577e80f5fd7567e878b22d71f415c06076038c4ce7308ebc40ad63019204802c",
+        "files": [
+            {
+                "name": "Default_GL_Patch.zip.001",
+                "mega": "VnJwgQgQ#hzdi5C_oLEf_e_lPntrr5u0GasJk76BhBaZe06cQv6Y",
+                "google": "1cfmSUpmemmOLYxEaM_UHLHDmCNnMesML",
+                "hash": "120d4a1525dff857be8a17b1efdeec4126f4ed0cd53dcde26312980506e76bcd"
+            },
+            {
+                "name": "Default_GL_Patch.zip.002",
+                "mega": "86ZAhLIb#LzP_WytBg2yrERwHeYC38qVjMxLsn9GBNnSXDeYVWLk",
+                "google": "1iU2p6L97kLMcBFE3L3qyVFPE5T0XDYGm",
+                "hash": "1c20ac062857fa18fd896323a2626262f6dfb88950205fb5109edc72a9e7842f"
+            }
+        ]
+    },
+    {
+        "name": "dummy_patch",
+        "file": "dummy_patch.zip",
+        "patch_version": "0.0.1",
+        "game_version": "GL",
+        "min_server_version": "0.0.1",
+        "desc": "Not a real patch.",
+        "requires": [
+            {
+                "name": "Default_GL_Patch",
+                "patch_version": "0.0.1"
+            }
+        ],
+        "conflicts": [],
+        "hash": "866b8e1ffa1ca61f3005e565c5562fd572329745a63643c4928d47fde1e5c1bc",
+        "files": [
+            {
+                "name": "dummy_patch.zip",
+                "mega": "1yIGyB4J#rO6G16179UuLTJiHhdwdcUOBsCxY52J4CfWfJ75XpQ4",
+                "google": "1XeJ1uf5feK6Gxi4YqndHSoXgIvffpIIV",
+                "hash": "866b8e1ffa1ca61f3005e565c5562fd572329745a63643c4928d47fde1e5c1bc"
+            }
+        ]
+    },
+    {
+        "name": "dummy_patch2",
+        "file": "dummy_patch2.zip",
+        "patch_version": "0.0.2",
+        "game_version": "JP",
+        "min_server_version": "0.0.2",
+        "desc": "Not a real patch 2.",
+        "requires": [],
+        "conflicts": [
+            {
+                "name": "dummy_patch",
+                "patch_version": "0.0.1"
+            }
+        ],
+        "hash": "866b8e1ffa1ca61f3005e565c5562fd572329745a63643c4928d47fde1e5c1bc",
+        "files": [
+            {
+                "name": "dummy_patch2.zip",
+                "mega": "1yIGyB4J#rO6G16179UuLTJiHhdwdcUOBsCxY52J4CfWfJ75XpQ4",
+                "google": "1XeJ1uf5feK6Gxi4YqndHSoXgIvffpIIV",
+                "hash": "866b8e1ffa1ca61f3005e565c5562fd572329745a63643c4928d47fde1e5c1bc"
+            }
+        ]
+    },
+    {
+        "name": "dummy_patch3",
+        "file": "dummy_patch3.zip",
+        "patch_version": "0.0.1",
+        "game_version": "JP",
+        "min_server_version": "0.0.1",
+        "desc": "Not a real patch 3. Requires dummy_patch2 to be installed first.",
+        "requires": [
+            {
+                "name": "dummy_patch2",
+                "patch_version": "0.0.2"
+            }
+        ],
+        "conflicts": [],
+        "hash": "866b8e1ffa1ca61f3005e565c5562fd572329745a63643c4928d47fde1e5c1bc",
+        "files": [
+            {
+                "name": "dummy_patch3.zip",
+                "mega": "1yIGyB4J#rO6G16179UuLTJiHhdwdcUOBsCxY52J4CfWfJ75XpQ4",
+                "google": "1XeJ1uf5feK6Gxi4YqndHSoXgIvffpIIV",
+                "hash": "866b8e1ffa1ca61f3005e565c5562fd572329745a63643c4928d47fde1e5c1bc"
+            }
+        ]
+    },
+    {
+        "name": "legacy_balance_patch",
+        "file": "legacy_balance_patch.zip",
+        "patch_version": "0.0.1",
+        "game_version": "GL",
+        "min_server_version": "0.0.1",
+        "desc": "Old balance data. Can not be installed alongside Default_GL_Patch.",
+        "requires": [],
+        "conflicts": [
+            {
+                "name": "Default_GL_Patch",
+                "patch_version": "0.0.1"
+            }
+        ],
+        "hash": "866b8e1ffa1ca61f3005e565c5562fd572329745a63643c4928d47fde1e5c1bc",
+        "files": [
+            {
+                "name": "legacy_balance_patch.zip",
+                "mega": "1yIGyB4J#rO6G16179UuLTJiHhdwdcUOBsCxY52J4CfWfJ75XpQ4",
+                "google": "1XeJ1uf5feK6Gxi4YqndHSoXgIvffpIIV",
+                "hash": "866b8e1ffa1ca61f3005e565c5562fd572329745a63643c4928d47fde1e5c1bc"
+            }
+        ]
+    }
+];
+
+/**
+ * Dummy player accounts. Enough entries to exercise pagination.
+ *
+ * @type {{id: number, uuid: string, player_id: string, ip_address: string, rebalance: boolean, version: "GL"|"JP", create_at: string}[]}
+ */
+const PLAYER_ACCOUNTS = [];
+
+for (let i = 0; i < 23; i++) {
+    PLAYER_ACCOUNTS.push({
+        id: i + 1,
+        uuid: `550e8400-e29b-41d4-a716-4466554400${`${i}`.padStart(2, "0")}`,
+        player_id: `Player${100 + i}`,
+        ip_address: `192.168.1.${10 + i}`,
+        rebalance: i % 3 == 0,
+        version: i % 4 == 0 ? "JP" : "GL",
+        create_at: humanReadable(new Date(2026, 2, i + 1))
+    });
+}
+
+/**
+ * Known user accounts for getSecret. Any other username returns not found
+ * (usernames / passwords are one-way hashed on the real server).
+ */
+const USER_SECRETS = {
+    "admin": "12568asd1aqsd",
+    "player one": "8yh12hasd8123"
 };
 
 /**
@@ -1247,6 +1409,20 @@ function _admin_websocket_functions(send, ws, msg, jobId) {
             break;
         case "installPatch":
             {
+                const patch = PATCH_LIST.find(self => self.name == msg.payload.patch);
+
+                if (patch == undefined) {
+                    Logger.error(`Unknown patch for install: ` + msg.payload.patch);
+
+                    send(ws, {
+                        type: "error",
+                        id: msg.id,
+                        payload: { message: "Unknown patch" }
+                    });
+
+                    break;
+                }
+
                 send(ws, {
                     type: "installPatch",
                     id: msg.id,
@@ -1276,6 +1452,25 @@ function _admin_websocket_functions(send, ws, msg, jobId) {
                     if (percent >= 100) {
                         clearInterval(interval);
 
+                        const installed = {
+                            name: patch.name,
+                            patch_version: patch.patch_version,
+                            game_version: patch.game_version,
+                            requires: patch.requires,
+                            conflicts: patch.conflicts,
+                            hasAssets: true,
+                            hasConfigs: true,
+                            hash: patch.hash
+                        };
+
+                        const index = serverDB.patches.findIndex(self => self.name == patch.name);
+
+                        if (index == -1) {
+                            serverDB.patches.push(installed);
+                        } else {
+                            serverDB.patches[index] = installed;
+                        }
+
                         send(ws, {
                             type: "jobComplete",
                             id: msg.id,
@@ -1292,6 +1487,20 @@ function _admin_websocket_functions(send, ws, msg, jobId) {
             break;
         case "uninstallPatch":
             {
+                const index = serverDB.patches.findIndex(self => self.name == msg.payload.patch);
+
+                if (index == -1) {
+                    Logger.error(`Patch is not installed: ` + msg.payload.patch);
+
+                    send(ws, {
+                        type: "error",
+                        id: msg.id,
+                        payload: { message: "Patch is not installed" }
+                    });
+
+                    break;
+                }
+
                 send(ws, {
                     type: "uninstallPatch",
                     id: msg.id,
@@ -1321,6 +1530,12 @@ function _admin_websocket_functions(send, ws, msg, jobId) {
                     if (percent >= 100) {
                         clearInterval(interval);
 
+                        const removeIndex = serverDB.patches.findIndex(self => self.name == msg.payload.patch);
+
+                        if (removeIndex != -1) {
+                            serverDB.patches.splice(removeIndex, 1);
+                        }
+
                         send(ws, {
                             type: "jobComplete",
                             id: msg.id,
@@ -1348,84 +1563,51 @@ function _admin_websocket_functions(send, ws, msg, jobId) {
             break;
         case "deletePlayerID":
             {
-                send(ws, {
-                    type: "deletePlayerID",
-                    id: msg.id,
-                    payload: {
-                        success: true
-                    }
-                });
+                const index = PLAYER_ACCOUNTS.findIndex(self => self.id == msg.payload.id);
+
+                if (index == -1) {
+                    send(ws, {
+                        type: "deletePlayerID",
+                        id: msg.id,
+                        payload: {
+                            success: false
+                        }
+                    });
+                } else {
+                    PLAYER_ACCOUNTS.splice(index, 1);
+
+                    serverDB.player_accounts = PLAYER_ACCOUNTS.length;
+
+                    send(ws, {
+                        type: "deletePlayerID",
+                        id: msg.id,
+                        payload: {
+                            success: true
+                        }
+                    });
+                }
             }
             break;
         case "getPlayerAccounts":
             {
-                const dummy = [
-                    {
-                        id: 1,
-                        uuid: "550e8400-e29b-41d4-a716-446655440000",
-                        player_id: "Player123",
-                        ip_address: "192.168.1.10",
-                        rebalance: false,
-                        version: "GL",
-                        create_at: "March 1st 2026",
-                    },
-                    {
-                        id: 2,
-                        uuid: "e4d909c2-5f57-4b39-9c2a-1a2b3c4d5e6f",
-                        player_id: "Player456",
-                        ip_address: "192.168.1.11",
-                        rebalance: true,
-                        version: "GL",
-                        create_at: "March 2nd 2026",
-                    },
-                    {
-                        id: 3,
-                        uuid: "e4d90912-5f57-4b59-9c2a-1a2b3c455e6f",
-                        player_id: "Player789",
-                        ip_address: "192.168.1.12",
-                        rebalance: false,
-                        version: "JP",
-                        create_at: "March 3rd 2026",
-                    }
-                ];
+                var accounts = PLAYER_ACCOUNTS;
 
                 if (msg.payload.uuid) {
-                    send(ws, {
-                        type: "getPlayerAccounts",
-                        id: msg.id,
-                        payload: {
-                            success: true,
-                            accounts: [dummy[0]]
-                        }
-                    });
+                    accounts = PLAYER_ACCOUNTS.filter(self => self.uuid.includes(msg.payload.uuid));
                 } else if (msg.payload.player_id) {
-                    send(ws, {
-                        type: "getPlayerAccounts",
-                        id: msg.id,
-                        payload: {
-                            success: true,
-                            accounts: dummy[2]
-                        }
-                    });
+                    accounts = PLAYER_ACCOUNTS.filter(self => self.player_id.includes(msg.payload.player_id));
                 } else if (msg.payload.ip_address) {
-                    send(ws, {
-                        type: "getPlayerAccounts",
-                        id: msg.id,
-                        payload: {
-                            success: true,
-                            accounts: [dummy[1]]
-                        }
-                    });
-                } else {
-                    send(ws, {
-                        type: "getPlayerAccounts",
-                        id: msg.id,
-                        payload: {
-                            success: true,
-                            accounts: dummy
-                        }
-                    });
+                    accounts = PLAYER_ACCOUNTS.filter(self => self.ip_address.includes(msg.payload.ip_address));
                 }
+
+                send(ws, {
+                    type: "getPlayerAccounts",
+                    id: msg.id,
+                    payload: {
+                        success: true,
+                        accounts: accounts
+                    }
+                });
             }
             break;
         case "getSecret":
@@ -1437,7 +1619,17 @@ function _admin_websocket_functions(send, ws, msg, jobId) {
                         type: "error",
                         id: msg.id,
                         payload: {
-                            message: "error"
+                            message: "No username given"
+                        }
+                    });
+                    // @ts-ignore
+                } else if (USER_SECRETS[username] == undefined) {
+                    send(ws, {
+                        type: "getSecret",
+                        id: msg.id,
+                        payload: {
+                            success: false,
+                            secret: ""
                         }
                     });
                 } else {
@@ -1446,7 +1638,8 @@ function _admin_websocket_functions(send, ws, msg, jobId) {
                         id: msg.id,
                         payload: {
                             success: true,
-                            secret: "12568asd1aqsd"
+                            // @ts-ignore
+                            secret: USER_SECRETS[username]
                         }
                     });
                 }
@@ -1454,7 +1647,9 @@ function _admin_websocket_functions(send, ws, msg, jobId) {
             break;
         case "switchDevice":
             {
-                if (msg.payload.uuid == undefined || msg.payload.player_id == undefined) {
+                const account = PLAYER_ACCOUNTS.find(self => self.player_id == msg.payload.player_id);
+
+                if (msg.payload.uuid == undefined || account == undefined) {
                     send(ws, {
                         type: "error",
                         id: msg.id,
@@ -1463,6 +1658,8 @@ function _admin_websocket_functions(send, ws, msg, jobId) {
                         }
                     });
                 } else {
+                    account.uuid = msg.payload.uuid;
+
                     send(ws, {
                         type: "switchDevice",
                         id: msg.id,
@@ -1522,83 +1719,7 @@ function _admin_websocket_functions(send, ws, msg, jobId) {
                 send(ws, {
                     type: "getPatches",
                     id: msg.id,
-                    payload: [
-                        {
-                            "name": "Default_GL_Patch",
-                            "file": "Default_GL_Patch.zip",
-                            "patch_version": "0.0.1",
-                            "game_version": "GL",
-                            "min_server_version": "0.0.1",
-                            "desc": "Required patch to play the GL version of the game.",
-                            "requires": [],
-                            "conflicts": [],
-                            "hash": "577e80f5fd7567e878b22d71f415c06076038c4ce7308ebc40ad63019204802c",
-                            "files": [
-                                {
-                                    "name": "Default_GL_Patch.zip.001",
-                                    "mega": "VnJwgQgQ#hzdi5C_oLEf_e_lPntrr5u0GasJk76BhBaZe06cQv6Y",
-                                    "google": "1cfmSUpmemmOLYxEaM_UHLHDmCNnMesML",
-                                    "hash": "120d4a1525dff857be8a17b1efdeec4126f4ed0cd53dcde26312980506e76bcd"
-                                },
-                                {
-                                    "name": "Default_GL_Patch.zip.002",
-                                    "mega": "86ZAhLIb#LzP_WytBg2yrERwHeYC38qVjMxLsn9GBNnSXDeYVWLk",
-                                    "google": "1iU2p6L97kLMcBFE3L3qyVFPE5T0XDYGm",
-                                    "hash": "1c20ac062857fa18fd896323a2626262f6dfb88950205fb5109edc72a9e7842f"
-                                }
-                            ]
-                        },
-                        {
-                            "name": "dummy_patch",
-                            "file": "dummy_patch.zip",
-                            "patch_version": "0.0.1",
-                            "game_version": "GL",
-                            "min_server_version": "0.0.1",
-                            "desc": "Not a real patch.",
-                            "requires": [
-                                {
-                                    "name": "Default_GL_Patch",
-                                    "patch_version": "0.0.1"
-                                }
-                            ],
-                            "conflicts": [],
-                            "hash": "866b8e1ffa1ca61f3005e565c5562fd572329745a63643c4928d47fde1e5c1bc",
-                            "files": [
-                                {
-                                    "name": "dummy_patch.zip",
-                                    "mega": "1yIGyB4J#rO6G16179UuLTJiHhdwdcUOBsCxY52J4CfWfJ75XpQ4",
-                                    "google": "1XeJ1uf5feK6Gxi4YqndHSoXgIvffpIIV",
-                                    "hash": "866b8e1ffa1ca61f3005e565c5562fd572329745a63643c4928d47fde1e5c1bc"
-                                }
-                            ]
-
-                        },
-                        {
-                            "name": "dummy_patch2",
-                            "file": "dummy_patch2.zip",
-                            "patch_version": "0.0.2",
-                            "game_version": "JP",
-                            "min_server_version": "0.0.2",
-                            "desc": "Not a real patch 2.",
-                            "requires": [],
-                            "conflicts": [
-                                {
-                                    "name": "dummy_patch",
-                                    "patch_version": "0.0.1"
-                                }
-                            ],
-                            "hash": "866b8e1ffa1ca61f3005e565c5562fd572329745a63643c4928d47fde1e5c1bc",
-                            "files": [
-                                {
-                                    "name": "dummy_patch2.zip",
-                                    "mega": "1yIGyB4J#rO6G16179UuLTJiHhdwdcUOBsCxY52J4CfWfJ75XpQ4",
-                                    "google": "1XeJ1uf5feK6Gxi4YqndHSoXgIvffpIIV",
-                                    "hash": "866b8e1ffa1ca61f3005e565c5562fd572329745a63643c4928d47fde1e5c1bc"
-                                }
-                            ]
-
-                        }
-                    ]
+                    payload: PATCH_LIST
                 });
 
             }
