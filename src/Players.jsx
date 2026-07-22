@@ -128,6 +128,8 @@ export default function Players({ connected, setNeedsRestart }){
             if(modal.account.player_id == "999999999"){
                 setActionMessage(`Can't delete dummy account.`);
 
+                closeModal();
+                
                 return;
             }
             
