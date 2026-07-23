@@ -11,30 +11,25 @@
     border: 1px solid #3a3a3a;
     background-color: #202020;
     padding: 10px;
-    display: flex;
-    flex-wrap: wrap;
-    gap: 10px;
-    align-items: center;
-    justify-content: space-between;
 }
 
 .patches-card-info {
-    flex: 1 1 16rem;
     min-width: 0;
     overflow-wrap: break-word;
 }
 
 .patches-card-actions {
-    flex: 0 0 auto;
     display: flex;
-    flex-direction: column;
     align-items: center;
-    text-align: center;
-    gap: 2px;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 8px;
 }
 
 .patches-name {
+    font-size: 1.2rem;
     font-weight: bold;
+    padding-bottom: 5px;
 }
 
 .patches-warning {
