@@ -1,35 +1,36 @@
-.players-table {
-    margin: 10px;
-    border: 2px solid #efefef;
-    border-spacing: 0;
-}
-
-.players-table-header {
-    background-color: #2a2a2a;
-}
-
-.players-th {
-    padding: 8px;
-    text-align: center;
+.players-list {
+    margin: 10px 0px;
+    max-width: 70rem;
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(21rem, 1fr));
+    gap: 8px;
     font-size: 0.9rem;
 }
 
-.players-border-bottom {
-    border-bottom: 2px solid #efefef;
+.players-card {
+    border: 1px solid #3a3a3a;
+    background-color: #202020;
+    padding: 10px;
+    min-width: 0;
 }
 
-.players-border-left {
-    border-left: 1px solid #efefef;
+.players-card-top {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 8px;
+    overflow-wrap: anywhere;
 }
 
-.players-border-right {
-    border-right: 1px solid #efefef;
+.players-card-id {
+    margin: 6px 0px;
+    font-weight: bold;
 }
 
-.players-subborder {
-    border-bottom: 1px solid #595959;
-    border-left: 1px solid #595959;
-    border-right: 1px solid #595959;
+.players-card-actions {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
 }
 
 .players-uuid {
@@ -61,7 +62,7 @@
 }
 
 .players-pagination {
-    margin: 0px 10px;
+    margin: 0px 5px;
     display: flex;
     align-items: center;
 }

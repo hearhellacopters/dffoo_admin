@@ -208,46 +208,35 @@ export default function Players({ connected, setNeedsRestart }){
 
     const pageAccounts = accounts == undefined ? [] : accounts.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
 
-    const accountsTable = (
-        <table className="players-table">
-            <thead>
-                <tr className="players-table-header">
-                    <th className="players-th players-border-bottom players-border-right">Region</th>
-                    <th className="players-th players-border-bottom players-border-left players-border-right">Player ID</th>
-                    <th className="players-th players-border-bottom players-border-left players-border-right">Device UUID</th>
-                    <th className="players-th players-border-bottom players-border-left players-border-right">IP Address</th>
-                    <th className="players-th players-border-bottom players-border-left players-border-right">Rebalance</th>
-                    <th className="players-th players-border-bottom players-border-left players-border-right">Created</th>
-                    <th className="players-th players-border-bottom players-border-left">Actions</th>
-                </tr>
-            </thead>
-            <tbody>
-                {pageAccounts.length == 0 ?
-                    <tr>
-                        <td className="players-th sub-header" colSpan="7">No accounts found.</td>
-                    </tr>
-                    :
-                    pageAccounts.map(account => (
-                        <tr key={account.id}>
-                            <td className="players-th players-subborder">{account.version == "GL" ? <span title="Global" className="glFlag" /> : <span title="Japanese" className="jpFlag" />}</td>
-                            <td className="players-th players-subborder color-yellow">{account.player_id}</td>
-                            <td className="players-th players-subborder players-uuid">{account.uuid}</td>
-                            <td className="players-th players-subborder">{account.ip_address}</td>
-                            <td className="players-th players-subborder" title={account.rebalance ? "Rebalance active" : "No rebalance"}>{account.rebalance ? "✅" : "—"}</td>
-                            <td className="players-th players-subborder" style={{fontSize: ".8rem"}}>{account.create_at}</td>
-                            <td className="players-th players-subborder">
-                                <div title="Re-link this account to a new device UUID" className="general-btn players-btn" onClick={() => openModal("switch", account)}>
-                                    Switch Device
-                                </div>
-                                <div title="Delete this player account" className="btn-reset players-btn players-delete-btn" onClick={() => openModal("delete", account)}>
-                                    Delete
-                                </div>
-                            </td>
-                        </tr>
-                    ))
-                }
-            </tbody>
-        </table>
+    const accountsList = (
+        <div className="players-list">
+            {pageAccounts.length == 0 ?
+                <div className="sub-header">No accounts found.</div>
+                :
+                pageAccounts.map(account => (
+                    <div key={account.id} className="players-card">
+                        <div className="players-card-top">
+                            {account.version == "GL" ? "🌎" : <span title="Japanese" className="jpFlag miniFlag" />}
+                            <span title="IP Address">{account.ip_address}</span>
+                            <span title="Device UUID" className="players-uuid">{account.uuid}</span>
+                            {account.rebalance ? <span title="Rebalance active">⚖️</span> : ""}
+                        </div>
+                        <div className="players-card-id">
+                            <span className="color-yellow">{account.player_id}</span>
+                            <div className="sub-header">{`Created ${account.create_at}`}</div>
+                        </div>
+                        <div className="players-card-actions">
+                            <div title="Re-link this account to a new device UUID" className="general-btn players-btn" onClick={() => openModal("switch", account)}>
+                                Switch Device
+                            </div>
+                            <div title="Delete this player account" className="btn-reset players-btn players-delete-btn" onClick={() => openModal("delete", account)}>
+                                Delete
+                            </div>
+                        </div>
+                    </div>
+                ))
+            }
+        </div>
     );
 
     const pagination = (
@@ -306,7 +295,7 @@ export default function Players({ connected, setNeedsRestart }){
             }
             {accounts == undefined ? "" :
                 <>
-                    {accountsTable}
+                    {accountsList}
                     {pagination}
                 </>
             }
