@@ -121,7 +121,9 @@ export default function Patches({ connected, setNeedsRestart }) {
      * @param {string} name Patch name
      */
     function displayName(name) {
-        return name.split("_").join(" ");
+        return name.split("_")
+        .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+        .join(" ");
     };
 
     /**
@@ -406,10 +408,10 @@ export default function Patches({ connected, setNeedsRestart }) {
         if (installed.patch_version != patch.patch_version &&
             versionMet(patch.patch_version, installed.patch_version)
         ) {
-            return <span className="color-yellow" title={`Installed v${installed.patch_version}, update v${patch.patch_version} available`}>{`⚠️ v${installed.patch_version} → v${patch.patch_version}`}</span>;
+            return <span className="color-yellow" title={`Installed v${installed.patch_version}, update v${patch.patch_version} available`}>{`⚠︎ v${installed.patch_version} → v${patch.patch_version}`}</span>;
         }
 
-        return <span className="color-green" title="Patch is up to date">{`✔️ v${installed.patch_version}`}</span>;
+        return <span className="color-green" title="Patch is up to date">{`✓ v${installed.patch_version}`}</span>;
     };
 
     const totalPages = patchData == undefined ? 1 : Math.max(1, Math.ceil(patchData.length / PAGE_SIZE));
@@ -418,69 +420,37 @@ export default function Patches({ connected, setNeedsRestart }) {
 
     const pagePatches = patchData == undefined ? [] : patchData.slice((safePage - 1) * PAGE_SIZE, safePage * PAGE_SIZE);
 
-    const patchesTable = (
-        <table className="patches-table">
-            <thead>
-                <tr>
-                    <th className="patches-center">Region</th>
-                    <th>Patch</th>
-                    <th className="patches-center">Version</th>
-                    <th className="patches-center">Server Ver.</th>
-                    <th>Requires</th>
-                    <th>Conflicts</th>
-                    <th className="patches-center">Status</th>
-                    <th className="patches-center">Actions</th>
-                </tr>
-            </thead>
-            <tbody>
-                {pagePatches.map((patch, index) => (
-                    <tr key={patch.name || index}>
-                        <td className="patches-cell patches-center">{patch.game_version == "GL" ? <span title="Global" className="glFlag" /> : <span title="Japanese" className="jpFlag" />}</td>
-                        <td className="patches-cell">
-                            <div className="patches-name">{displayName(patch.name)}</div>
+    const patchesList = (
+        <div className="patches-list">
+            {pagePatches.map((patch, index) => {
+                const installed = getInstalled(patch.name);
+
+                const hasUpdate = installed != undefined &&
+                                  installed.patch_version != patch.patch_version &&
+                                  versionMet(patch.patch_version, installed.patch_version);
+                // only surface validation info when something actually blocks an action
+                const warnings = [
+                    ...(installed == undefined || hasUpdate ? getInstallIssues(patch) : []),
+                    ...(installed != undefined ? getUninstallIssues(patch) : [])
+                ];
+
+                return (
+                    <div key={patch.name || index} className="patches-card">
+                        <div className="patches-card-info">
+                            <div className="patches-name">{patch.game_version == "GL" ? "🌎" : <span title="Japanese" className="jpFlag miniFlag" />}{" "}{displayName(patch.name) + " - v" + patch.patch_version}</div>
                             <div className="sub-header">{patch.desc}</div>
-                        </td>
-                        <td className="patches-cell patches-center">{patch.patch_version}</td>
-                        <td className="patches-cell patches-center">
-                            {currentConsts == undefined || versionMet(currentConsts.SERVER_VERSION, patch.min_server_version)
-                                ? <span title="Server version ok" className="color-green">{patch.min_server_version}</span>
-                                : <span title={`Requires server v${patch.min_server_version}`} className="color-red">{patch.min_server_version}</span>
-                            }
-                        </td>
-                        <td className="patches-cell">
-                            {patch.requires.length == 0 ? <span className="sub-header">-</span> :
-                                patch.requires.map(req => {
-                                    const installed = getInstalled(req.name);
-
-                                    const met = installed != undefined && versionMet(installed.patch_version, req.patch_version);
-
-                                    return (
-                                        <div key={req.name} title={met ? `${displayName(req.name)} v${req.patch_version} installed` : `Requires ${displayName(req.name)} v${req.patch_version}`}>
-                                            {met ? "✅" : "❌"} {displayName(req.name)}
-                                        </div>
-                                    );
-                                })
-                            }
-                        </td>
-                        <td className="patches-cell">
-                            {patch.conflicts.length == 0 ? <span className="sub-header">-</span> :
-                                patch.conflicts.map(conflict => {
-                                    const active = getInstalled(conflict.name) != undefined;
-
-                                    return (
-                                        <div key={conflict.name} className={active ? "color-red" : ""} title={active ? `Conflicting patch ${displayName(conflict.name)} is installed` : `Conflicts with ${displayName(conflict.name)} (not installed)`}>
-                                            {active ? "⚠️" : "•"} {displayName(conflict.name)}
-                                        </div>
-                                    );
-                                })
-                            }
-                        </td>
-                        <td className="patches-cell patches-center">{statusCell(patch)}</td>
-                        <td className="patches-cell patches-center">{actionsCell(patch)}</td>
-                    </tr>
-                ))}
-            </tbody>
-        </table>
+                            {warnings.map(warning => (
+                                <div key={warning} className="patches-warning color-yellow">⚠︎ {warning}</div>
+                            ))}
+                        </div>
+                        <div className="patches-card-actions">
+                            {statusCell(patch)}
+                            {actionsCell(patch)}
+                        </div>
+                    </div>
+                );
+            })}
+        </div>
     );
 
     const pagination = (
@@ -541,7 +511,7 @@ export default function Patches({ connected, setNeedsRestart }) {
                             &nbsp;Delete downloaded zip files after install?
                         </label>
                     </div>
-                    {patchesTable}
+                    {patchesList}
                     {pagination}
                 </>
             }

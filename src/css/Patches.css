@@ -1,40 +1,48 @@
-.patches-table {
+.patches-list {
     margin: 10px 0px;
-    width: 100%;
     max-width: 70rem;
-    border-collapse: collapse;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
     font-size: 0.9rem;
 }
 
-.patches-table thead th {
-    background-color: #2a2a2a;
-    padding: 8px 10px;
-    text-align: left;
-    border-bottom: 2px solid #595959;
-}
-
-.patches-table tbody tr:nth-child(even) {
+.patches-card {
+    border: 1px solid #3a3a3a;
     background-color: #202020;
+    padding: 10px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    align-items: center;
+    justify-content: space-between;
 }
 
-.patches-cell {
-    padding: 8px 10px;
-    border-bottom: 1px solid #3a3a3a;
-    text-align: left;
-    vertical-align: middle;
+.patches-card-info {
+    flex: 1 1 16rem;
+    min-width: 0;
+    overflow-wrap: break-word;
 }
 
-.patches-center {
+.patches-card-actions {
+    flex: 0 0 auto;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
     text-align: center;
+    gap: 2px;
 }
 
 .patches-name {
     font-weight: bold;
-    text-transform: capitalize;
+}
+
+.patches-warning {
+    font-size: 0.8rem;
 }
 
 .patches-btn {
-    margin: 2px 5px;
+    margin: 2px 5px !important;
     min-width: 5rem;
 }
 
