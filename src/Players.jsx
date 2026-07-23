@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { request } from "./services/socket.js";
 import "./css/Players.css";
 
-const PAGE_SIZE = 10;
+const PAGE_SIZE = 12;
 
 /**
  * Players page
@@ -218,11 +218,11 @@ export default function Players({ connected, setNeedsRestart }){
                         <div className="players-card-top">
                             {account.version == "GL" ? "🌎" : <span title="Japanese" className="jpFlag miniFlag" />}
                             <span title="IP Address">{account.ip_address}</span>
-                            <span title="Device UUID" className="players-uuid">{account.uuid}</span>
                             {account.rebalance ? <span title="Rebalance active">⚖️</span> : ""}
                         </div>
                         <div className="players-card-id">
-                            <span className="color-yellow">{account.player_id}</span>
+                            <div style={{paddingBottom:"6px"}} className="color-yellow">{account.player_id}</div>
+                            <div style={{paddingBottom:"6px"}} title="Device UUID" className="players-uuid">{"📱 "+account.uuid}</div>
                             <div className="sub-header">{`Created ${account.create_at}`}</div>
                         </div>
                         <div className="players-card-actions">

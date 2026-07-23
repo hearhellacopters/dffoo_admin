@@ -29,13 +29,13 @@ export default function Patches({ connected, setNeedsRestart }) {
     /**
      * The currently running job. Only one patch job runs at a time.
      *
-     * @type {[{name: string, type: "installPatch" | "uninstallPatch", progress: number, status: string} | undefined, (any)=> void]}
+     * @type {[{name: string, type: "installPatch" | "uninstallPatch", progress: number, status: string, task: string} | undefined, (any)=> void]}
      */
     const [activeJob    , setActiveJob    ] = useState();
     /**
      * Result of the last finished job, shown inline in that patch's row.
      *
-     * @type {[{name: string, status: string, success: boolean} | undefined, (any)=> void]}
+     * @type {[{name: string, status: string, task: string, success: boolean} | undefined, (any)=> void]}
      */
     const [lastJob      , setLastJob      ] = useState();
 
@@ -288,20 +288,21 @@ export default function Patches({ connected, setNeedsRestart }) {
             if (res.type == "error") {
                 console.error(res.payload.message);
 
-                setLastJob({ name: patch.name, status: res.payload.message, success: false });
+                setLastJob({ name: patch.name, status: res.payload.message, success: false, task: "" });
 
                 return;
             } else {
                 const jobId = res.payload.jobId;
 
-                setActiveJob({ name: patch.name, type: type, progress: 0, status: res.payload.status });
+                setActiveJob({ name: patch.name, type: type, progress: 0, status: res.payload.status, task: res.payload.task || "Starting..." });
 
                 jobs.current.set(jobId, {
                     onProgress: async (data) => {
                         setActiveJob((prevValue) => prevValue && {
                             ...prevValue,
                             progress: data.payload.progress,
-                            status: data.payload.status
+                            status: data.payload.status,
+                            task: data.payload.task 
                         });
                     },
                     onComplete: async (data) => {
@@ -309,7 +310,7 @@ export default function Patches({ connected, setNeedsRestart }) {
                             setNeedsRestart(true);
                         }
 
-                        setLastJob({ name: patch.name, status: data.payload.status, success: data.payload.success });
+                        setLastJob({ name: patch.name, task: data.payload.task, status: data.payload.status, success: data.payload.success });
 
                         setActiveJob();
 
@@ -331,7 +332,8 @@ export default function Patches({ connected, setNeedsRestart }) {
         if (activeJob != undefined && activeJob.name == patch.name) {
             return (
                 <div className="patches-job">
-                    <progress style={{width: "100%"}} value={activeJob.progress} max={100}>{`${activeJob.progress}%`}</progress>
+                    <div className="">{activeJob.task}</div>
+                    <progress style={{width:"100%"}} value={activeJob.progress} max={100}>{`${activeJob.progress}%`}</progress>
                     <div className="sub-header">{activeJob.status}</div>
                 </div>
             );
@@ -438,13 +440,13 @@ export default function Patches({ connected, setNeedsRestart }) {
                     <div key={patch.name || index} className="patches-card">
                         <div className="patches-card-info">
                             <div className="patches-name">{patch.game_version == "GL" ? "🌎" : <span title="Japanese" className="jpFlag miniFlag" />}{" "}{displayName(patch.name) + " - v" + patch.patch_version}</div>
-                            <div className="sub-header">{patch.desc}</div>
+                            <div style={{paddingBottom:"6px"}} className="sub-header">{" - "}{patch.desc}</div>
                             {warnings.map(warning => (
                                 <div key={warning} className="patches-warning color-yellow">⚠︎ {warning}</div>
                             ))}
                         </div>
+                        <div>{statusCell(patch)}</div>
                         <div className="patches-card-actions">
-                            {statusCell(patch)}
                             {actionsCell(patch)}
                         </div>
                     </div>

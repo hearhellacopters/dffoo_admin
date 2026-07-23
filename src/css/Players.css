@@ -15,6 +15,7 @@
 }
 
 .players-card-top {
+    font-size: 1.2rem;
     display: flex;
     align-items: center;
     flex-wrap: wrap;
@@ -34,6 +35,7 @@
 }
 
 .players-uuid {
+    color: #bbb;
     font-size: 0.8rem;
     font-family: monospace;
 }
